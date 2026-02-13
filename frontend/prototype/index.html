@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VestLab 财经新闻 — 全球市场仪表盘</title>
+    <meta name="description" content="面向中国投资者的全球财经新闻仪表盘，整合 AI 每日市场简报、全球指数行情、双语新闻流">
+
+    <!-- Tailwind CSS 4 via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style type="text/tailwindcss">
+        @theme {
+            --font-sans: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+            --color-up: oklch(0.72 0.19 142);
+            --color-down: oklch(0.64 0.21 25);
+            --color-badge-bloomberg: oklch(0.59 0.2 293);
+            --color-badge-wsj-markets: oklch(0.77 0.16 70);
+            --color-badge-wsj-economy: oklch(0.62 0.17 256);
+            --color-badge-wsj-world: oklch(0.7 0.15 165);
+            --color-surface: #111827;
+            --color-surface-hover: #1e293b;
+            --color-surface-alt: #0d1321;
+            --color-border-subtle: #1e293b;
+        }
+
+        /* Ticker scrolling animation */
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .ticker-track {
+            animation: ticker-scroll 60s linear infinite;
+        }
+        .ticker-track:hover {
+            animation-play-state: paused;
+        }
+
+        /* Markdown prose styles */
+        .prose-finance h1 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 1rem; color: #f1f5f9; }
+        .prose-finance h2 {
+            font-size: 1.2rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #e2e8f0;
+            padding-left: 0.75rem; border-left: 3px solid #6366f1;
+        }
+        .prose-finance h3 { font-size: 1.05rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: #cbd5e1; }
+        .prose-finance p { margin: 0.5rem 0; color: #94a3b8; line-height: 1.75; }
+        .prose-finance strong { color: #e2e8f0; }
+        .prose-finance ul, .prose-finance ol { margin: 0.5rem 0; padding-left: 1.5rem; color: #94a3b8; }
+        .prose-finance li { margin: 0.25rem 0; line-height: 1.7; }
+        .prose-finance blockquote {
+            border-left: 3px solid #334155; padding-left: 1rem;
+            margin: 0.75rem 0; color: #64748b; font-style: italic;
+        }
+        .prose-finance hr { border-color: #1e293b; margin: 1.5rem 0; }
+        .prose-finance a { color: #818cf8; text-decoration: underline; }
+        .prose-finance table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+        .prose-finance th { background: #1e293b; color: #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; font-weight: 600; }
+        .prose-finance td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1e293b; color: #94a3b8; }
+        .prose-finance tr:hover td { background: #1e293b40; }
+        .prose-finance code {
+            background: #1e293b; padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem; font-size: 0.875rem; color: #c084fc;
+        }
+
+        /* Custom scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Skeleton loading */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+            border-radius: 0.375rem;
+        }
+
+        /* Calendar styles (shadcn-inspired) */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+        }
+        .calendar-day {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; font-size: 0.8125rem; cursor: pointer;
+            transition: all 0.15s ease;
+            color: #94a3b8;
+        }
+        .calendar-day:hover:not(.calendar-disabled):not(.calendar-selected) {
+            background: #1e293b; color: #e2e8f0;
+        }
+        .calendar-day.calendar-today {
+            background: #1e293b; color: #e2e8f0; font-weight: 600;
+        }
+        .calendar-day.calendar-selected {
+            background: #6366f1; color: #fff; font-weight: 600;
+        }
+        .calendar-day.calendar-other-month {
+            color: #334155;
+        }
+        .calendar-day.calendar-disabled {
+            color: #1e293b; cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0a0f1a] text-slate-200 font-sans min-h-screen flex flex-col">
+
+    <!-- ═══════════════ TOP NAV ═══════════════ -->
+    <header class="sticky top-0 z-50 border-b border-border-subtle bg-surface-alt/90 backdrop-blur-xl">
+        <!-- Logo + Ticker -->
+        <div class="flex items-center">
+            <!-- Logo -->
+            <div class="flex items-center gap-2.5 px-5 py-2 border-r border-border-subtle shrink-0">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                        <polyline points="16 7 22 7 22 13" />
+                    </svg>
+                </div>
+                <div class="flex flex-col leading-none">
+                    <span class="text-sm font-bold text-white tracking-tight">VestLab</span>
+                    <span class="text-[10px] text-slate-500 font-medium">Finance News</span>
+                </div>
+            </div>
+
+            <!-- Ticker -->
+            <div class="flex-1 overflow-hidden relative">
+                <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-surface-alt to-transparent z-10">
+                </div>
+                <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-surface-alt to-transparent z-10">
+                </div>
+                <div id="ticker-container" class="flex">
+                    <div id="ticker-track" class="ticker-track flex items-center gap-6 py-2.5 px-4 whitespace-nowrap">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+    <main class="flex-1 max-w-[1600px] mx-auto w-full px-4 lg:px-6 py-6">
+        <div class="flex flex-col lg:flex-row gap-6">
+
+            <!-- ── LEFT: Daily Briefing ── -->
+            <section class="lg:w-[60%] flex flex-col gap-4">
+                <!-- Header + Calendar Trigger -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-8 bg-indigo-500 rounded-full"></div>
+                        <h1 class="text-xl font-bold text-white">每日市场简报</h1>
+                    </div>
+                    <!-- Calendar Trigger -->
+                    <div class="relative">
+                        <button onclick="toggleCalendar()" id="calendar-trigger"
+                            class="flex items-center gap-2 bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-slate-300 hover:bg-surface-hover hover:border-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                            <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
+                            <span id="selected-date-text" class="font-mono text-sm"></span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                        </button>
+
+                        <!-- Calendar Popover (shadcn-style) -->
+                        <div id="calendar-popover" class="hidden absolute right-0 top-full mt-2 z-50">
+                            <div
+                                class="bg-surface border border-border-subtle rounded-xl shadow-2xl shadow-black/40 p-4 w-[290px]">
+                                <!-- Calendar Header -->
+                                <div class="flex items-center justify-between mb-3">
+                                    <button onclick="calendarNav(-1)"
+                                        class="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-slate-400 hover:text-white">
+                                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                    </button>
+                                    <h3 id="calendar-month-label" class="text-sm font-semibold text-slate-200"></h3>
+                                    <button onclick="calendarNav(1)"
+                                        class="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-slate-400 hover:text-white">
+                                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <!-- Weekday Headers -->
+                                <div class="calendar-grid mb-1">
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">日</div>
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">一</div>
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">二</div>
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">三</div>
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">四</div>
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">五</div>
+                                    <div class="text-center text-[11px] font-medium text-slate-500 py-1">六</div>
+                                </div>
+                                <!-- Calendar Days -->
+                                <div id="calendar-days" class="calendar-grid"></div>
+                                <!-- Quick Actions -->
+                                <div class="mt-3 pt-3 border-t border-border-subtle flex gap-2">
+                                    <button onclick="selectToday()"
+                                        class="flex-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 py-1.5 rounded-lg hover:bg-indigo-500/10 transition-colors">
+                                        今天
+                                    </button>
+                                    <button onclick="selectYesterday()"
+                                        class="flex-1 text-xs font-medium text-slate-400 hover:text-slate-300 py-1.5 rounded-lg hover:bg-surface-hover transition-colors">
+                                        昨天
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Briefing Card -->
+                <div
+                    class="bg-surface rounded-2xl border border-border-subtle overflow-hidden shadow-2xl shadow-black/20">
+                    <div id="briefing-content"
+                        class="p-6 lg:p-8 prose-finance custom-scroll max-h-[calc(100vh-180px)] overflow-y-auto">
+                        <div class="space-y-4">
+                            <div class="skeleton h-8 w-3/4"></div>
+                            <div class="skeleton h-4 w-full"></div>
+                            <div class="skeleton h-4 w-5/6"></div>
+                            <div class="skeleton h-4 w-4/5"></div>
+                            <div class="skeleton h-6 w-1/2 mt-6"></div>
+                            <div class="skeleton h-4 w-full"></div>
+                            <div class="skeleton h-4 w-3/4"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── RIGHT: News Feed ── -->
+            <section class="lg:w-[40%] flex flex-col gap-4">
+                <!-- Header + Filter -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-8 bg-amber-500 rounded-full"></div>
+                        <h2 class="text-xl font-bold text-white">新闻列表</h2>
+                        <span id="news-count"
+                            class="text-xs text-slate-500 bg-surface px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <select id="source-filter" onchange="filterNews()"
+                        class="bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                        <option value="all">全部来源</option>
+                        <option value="Bloomberg">Bloomberg</option>
+                        <option value="WSJ Markets">WSJ Markets</option>
+                        <option value="WSJ Economy">WSJ Economy</option>
+                        <option value="WSJ World">WSJ World</option>
+                    </select>
+                </div>
+
+                <!-- Search -->
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input type="text" id="search-input" placeholder="搜索新闻标题..." oninput="filterNews()"
+                        class="w-full bg-surface border border-border-subtle rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500">
+                </div>
+
+                <!-- News List -->
+                <div id="news-list"
+                    class="flex flex-col gap-3 custom-scroll max-h-[calc(100vh-240px)] overflow-y-auto pr-1">
+                    <div class="space-y-3">
+                        <div class="bg-surface rounded-xl border border-border-subtle p-4 space-y-3">
+                            <div class="skeleton h-3 w-20"></div>
+                            <div class="skeleton h-5 w-full"></div>
+                            <div class="skeleton h-3 w-3/4"></div>
+                        </div>
+                        <div class="bg-surface rounded-xl border border-border-subtle p-4 space-y-3">
+                            <div class="skeleton h-3 w-24"></div>
+                            <div class="skeleton h-5 w-5/6"></div>
+                            <div class="skeleton h-3 w-2/3"></div>
+                        </div>
+                        <div class="bg-surface rounded-xl border border-border-subtle p-4 space-y-3">
+                            <div class="skeleton h-3 w-16"></div>
+                            <div class="skeleton h-5 w-4/5"></div>
+                            <div class="skeleton h-3 w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ═══════════════ FOOTER ═══════════════ -->
+    <footer class="border-t border-border-subtle py-4 px-6 flex items-center justify-between text-xs text-slate-600">
+        <div class="flex items-center gap-2">
+            <div
+                class="w-4 h-4 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                </svg>
+            </div>
+            <span>VestLab © 2026 · 全球财经新闻聚合</span>
+        </div>
+        <span>Data: Yahoo Finance · AI: Qwen / Gemini</span>
+    </footer>
+
+    <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+    <script>
+        let allNews = [];
+        let selectedDate = todayStr();
+        let calendarViewDate = new Date(); // the month being viewed
+
+        // ─── Utilities ───
+        function timeAgo(dateStr) {
+            const now = new Date();
+            const date = new Date(dateStr);
+            const diffMs = now - date;
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) return '刚刚';
+            if (mins < 60) return `${mins} 分钟前`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `${hours} 小时前`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days} 天前`;
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        function getSourceConfig(source) {
+            const map = {
+                'Bloomberg': { color: 'bg-badge-bloomberg', label: 'Bloomberg' },
+                'WSJ Markets': { color: 'bg-badge-wsj-markets', label: 'WSJ Markets' },
+                'WSJ Economy': { color: 'bg-badge-wsj-economy', label: 'WSJ Economy' },
+                'WSJ World': { color: 'bg-badge-wsj-world', label: 'WSJ World' },
+            };
+            return map[source] || { color: 'bg-slate-600', label: source };
+        }
+
+        function todayStr() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function formatDateCN(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            const today = todayStr();
+            if (dateStr === today) return `${month}月${day}日 · 今天`;
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (dateStr === yesterday.toISOString().split('T')[0]) return `${month}月${day}日 · 昨天`;
+            return `${d.getFullYear()}年${month}月${day}日`;
+        }
+
+        // ─── Calendar ───
+        function toggleCalendar() {
+            const popover = document.getElementById('calendar-popover');
+            const isHidden = popover.classList.contains('hidden');
+            if (isHidden) {
+                calendarViewDate = new Date(selectedDate + 'T00:00:00');
+                renderCalendar();
+                popover.classList.remove('hidden');
+            } else {
+                popover.classList.add('hidden');
+            }
+        }
+
+        function calendarNav(delta) {
+            calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = calendarViewDate.getFullYear();
+            const month = calendarViewDate.getMonth();
+
+            // Update header
+            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            document.getElementById('calendar-month-label').textContent = `${year}年 ${monthNames[month]}`;
+
+            // Get first day of month and total days
+            const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const today = todayStr();
+            const container = document.getElementById('calendar-days');
+            let html = '';
+
+            // Previous month's trailing days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                html += `<div class="calendar-day calendar-other-month">${day}</div>`;
+            }
+
+            // Current month days
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isFuture = dateStr > today;
+                const isToday = dateStr === today;
+                const isSelected = dateStr === selectedDate;
+
+                let cls = 'calendar-day';
+                if (isFuture) cls += ' calendar-disabled';
+                else if (isSelected) cls += ' calendar-selected';
+                else if (isToday) cls += ' calendar-today';
+
+                const onclick = isFuture ? '' : `onclick="selectDate('${dateStr}')"`;
+                html += `<div class="${cls}" ${onclick}>${d}</div>`;
+            }
+
+            // Next month's leading days
+            const totalCells = firstDay + daysInMonth;
+            const remaining = (7 - (totalCells % 7)) % 7;
+            for (let d = 1; d <= remaining; d++) {
+                html += `<div class="calendar-day calendar-other-month">${d}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            document.getElementById('selected-date-text').textContent = formatDateCN(dateStr);
+            document.getElementById('calendar-popover').classList.add('hidden');
+            loadSummary(dateStr);
+        }
+
+        function selectToday() { selectDate(todayStr()); }
+
+        function selectYesterday() {
+            const d = new Date();
+            d.setDate(d.getDate() - 1);
+            selectDate(d.toISOString().split('T')[0]);
+        }
+
+        // Close calendar on outside click
+        document.addEventListener('click', (e) => {
+            const popover = document.getElementById('calendar-popover');
+            const trigger = document.getElementById('calendar-trigger');
+            if (!popover.contains(e.target) && !trigger.contains(e.target)) {
+                popover.classList.add('hidden');
+            }
+        });
+
+        // ─── Mock Data ───
+        const MOCK_MARKET_DATA = [
+            { symbol: '^GSPC', name: '标普500', price: 6142.30, change_percent: 0.82 },
+            { symbol: '^IXIC', name: '纳斯达克', price: 19834.15, change_percent: 1.21 },
+            { symbol: '^DJI', name: '道琼斯', price: 44298.86, change_percent: 0.35 },
+            { symbol: '000001.SS', name: '上证综指', price: 3332.48, change_percent: 0.56 },
+            { symbol: '399001.SZ', name: '深证成指', price: 10518.72, change_percent: 0.91 },
+            { symbol: '^HSI', name: '恒生指数', price: 22195.68, change_percent: -0.42 },
+            { symbol: '^N225', name: '日经225', price: 38920.26, change_percent: -0.18 },
+            { symbol: '^FTSE', name: '富时100', price: 8715.53, change_percent: 0.27 },
+            { symbol: '^GDAXI', name: '德国DAX', price: 22438.92, change_percent: 0.63 },
+            { symbol: '^FCHI', name: '法国CAC40', price: 7965.44, change_percent: 0.15 },
+            { symbol: '^AXJO', name: 'ASX200', price: 8412.88, change_percent: -0.33 },
+            { symbol: '^KS11', name: 'KOSPI', price: 2586.13, change_percent: 1.05 },
+        ];
+
+        const MOCK_SUMMARY = `# 📊 VestLab 全球市场每日简报
+
+> 📅 ${todayStr()} · 由 AI 自动生成 · 数据来源：Yahoo Finance & Bloomberg/WSJ RSS
+
+---
+
+## 📈 市场脉搏
+
+今日全球股市整体表现积极，**科技板块**继续领涨。美股三大指数全线收涨，其中纳斯达克综合指数涨幅最为显著，上涨 **1.21%**，报收 19,834.15 点，再创年内新高。
+
+- **标普500** 收于 6,142.30 点，上涨 0.82%
+- **道琼斯工业指数** 微涨 0.35%，报 44,298.86 点
+- **纳斯达克综合** 大涨 1.21%，受益于 AI 概念股的强劲表现
+
+亚太市场方面，A股表现亮眼：**上证综指**上涨 0.56% 至 3,332.48 点，**深证成指**涨 0.91%。港股恒生指数小幅回调 0.42%，主要受地产板块拖累。
+
+## 🔥 焦点事件
+
+### 英伟达发布新一代 AI 芯片路线图
+英伟达 CEO 黄仁勋在公司年度活动上公布了下一代 Blackwell Ultra 和 Vera Rubin 架构的详细路线图，预计将在下半年量产。消息推动芯片板块全面走强，**费城半导体指数**上涨 2.3%。
+
+### 美联储会议纪要释放偏鸽信号
+最新公布的 FOMC 一月会议纪要显示，多数委员认为在通胀持续回落的背景下，可以考虑在年中适时启动**降息周期**。市场目前定价 6 月首次降息的概率已升至 72%。
+
+### 中国 CPI 数据超预期
+2 月份中国居民消费价格指数（CPI）同比上涨 **0.7%**，超出市场预期的 0.3%，为近 6 个月来最高。核心 CPI 同比上涨 1.0%，显示内需复苏迹象。
+
+## 📊 板块分析
+
+| 板块 | 涨跌幅 | 代表个股 |
+|------|--------|---------|
+| 半导体 | +2.3% | NVDA +4.2%, AMD +3.1% |
+| 软件服务 | +1.8% | MSFT +1.5%, CRM +2.8% |
+| 新能源 | +1.2% | TSLA +2.1%, ENPH +3.5% |
+| 银行金融 | +0.5% | JPM +0.8%, GS +0.3% |
+| 房地产 | -0.8% | AMT -1.2%, PLD -0.6% |
+
+## 🌍 地缘与宏观
+
+- **俄乌局势**：双方在土耳其举行新一轮谈判，市场对和平协议预期有所升温，欧洲天然气期货下跌 3.2%。
+- **日元走势**：日元兑美元跌至 152.3，日本央行暗示将维持宽松政策，推动日本出口商股价走高。
+- **原油市场**：WTI 原油收于 78.42 美元/桶，上涨 0.8%，OPEC+ 将于下周召开产量政策会议。
+
+## 🔮 明日展望
+
+**关注要点**：
+1. 美国 2 月非农就业数据将于明日公布，市场预期新增就业 18.5 万人
+2. 欧洲央行利率决议，预计维持不变但关注政策指引措辞变化
+3. 英伟达（NVDA）财报后续机构评级更新
+
+> ⚠️ 本报告由 AI 基于公开数据自动生成，不构成投资建议。`;
+
+        const now = new Date();
+        const MOCK_NEWS = [
+            {
+                id: '1', source: 'Bloomberg',
+                title: 'Nvidia Unveils Next-Gen AI Chip Roadmap, Shares Surge to Record',
+                translated_title: '英伟达发布新一代 AI 芯片路线图，股价飙升至历史新高',
+                translated_content: '英伟达 CEO 黄仁勋公布了 Blackwell Ultra 和 Vera Rubin 架构的详细路线图，预计下半年量产。',
+                url: 'https://bloomberg.com', published_at: new Date(now - 25 * 60000).toISOString(),
+            },
+            {
+                id: '2', source: 'WSJ Markets',
+                title: 'Fed Minutes Signal Potential Rate Cut in Mid-2026 as Inflation Eases',
+                translated_title: '美联储会议纪要暗示年中可能降息，通胀持续缓解',
+                translated_content: 'FOMC 一月会议纪要显示，多数委员认为可以考虑在年中适时启动降息周期。',
+                url: 'https://wsj.com', published_at: new Date(now - 48 * 60000).toISOString(),
+            },
+            {
+                id: '3', source: 'Bloomberg',
+                title: 'China CPI Beats Expectations, Rising 0.7% in February',
+                translated_title: '中国 2 月 CPI 超预期上涨 0.7%，内需复苏信号增强',
+                translated_content: '2 月份居民消费价格指数同比上涨 0.7%，为近 6 个月来最高，核心 CPI 同比上涨 1.0%。',
+                url: 'https://bloomberg.com', published_at: new Date(now - 1.5 * 3600000).toISOString(),
+            },
+            {
+                id: '4', source: 'WSJ Economy',
+                title: 'European Natural Gas Futures Drop 3.2% on Ukraine Peace Talk Progress',
+                translated_title: '俄乌和谈取得进展，欧洲天然气期货下跌 3.2%',
+                translated_content: '双方在土耳其举行新一轮谈判，市场对和平协议预期升温，推动能源价格回落。',
+                url: 'https://wsj.com', published_at: new Date(now - 2 * 3600000).toISOString(),
+            },
+            {
+                id: '5', source: 'WSJ World',
+                title: 'Japan Yen Falls to 152.3 as BOJ Signals Continuation of Easy Policy',
+                translated_title: '日元跌至 152.3，日本央行暗示将维持宽松政策',
+                translated_content: '日本央行副行长表示当前经济形势尚不支持进一步收紧货币政策。',
+                url: 'https://wsj.com', published_at: new Date(now - 3 * 3600000).toISOString(),
+            },
+            {
+                id: '6', source: 'Bloomberg',
+                title: 'Philadelphia Semiconductor Index Jumps 2.3% on AI Chip Optimism',
+                translated_title: '费城半导体指数大涨 2.3%，AI 芯片乐观情绪持续',
+                translated_content: '受英伟达路线图发布影响，AMD 涨 3.1%，台积电 ADR 涨 1.8%。',
+                url: 'https://bloomberg.com', published_at: new Date(now - 3.5 * 3600000).toISOString(),
+            },
+            {
+                id: '7', source: 'WSJ Markets',
+                title: 'Tesla Shares Rise 2.1% After Analyst Upgrades on Autonomous Driving Progress',
+                translated_title: '分析师上调评级看好自动驾驶进展，特斯拉股价涨 2.1%',
+                translated_content: '摩根士丹利将特斯拉评级上调至"增持"，目标价从 340 美元上调至 400 美元。',
+                url: 'https://wsj.com', published_at: new Date(now - 4 * 3600000).toISOString(),
+            },
+            {
+                id: '8', source: 'WSJ Economy',
+                title: 'US Jobless Claims Fall to 210K, Labor Market Remains Resilient',
+                translated_title: '美国初请失业金人数降至 21 万，就业市场依然强劲',
+                translated_content: '上周初请失业金人数低于市场预期，表明劳动力市场并未出现明显降温。',
+                url: 'https://wsj.com', published_at: new Date(now - 5 * 3600000).toISOString(),
+            },
+            {
+                id: '9', source: 'Bloomberg',
+                title: 'OPEC+ to Discuss Output Policy Next Week Amid Rising Oil Prices',
+                translated_title: 'OPEC+ 将于下周讨论产量政策，油价持续攀升',
+                translated_content: 'WTI 原油收于 78.42 美元/桶，上涨 0.8%。市场关注 OPEC+ 是否会延长减产协议。',
+                url: 'https://bloomberg.com', published_at: new Date(now - 6 * 3600000).toISOString(),
+            },
+            {
+                id: '10', source: 'WSJ World',
+                title: 'ECB Rate Decision Expected Thursday, Markets Eye Policy Guidance Shift',
+                translated_title: '欧洲央行利率决议在即，市场关注政策指引措辞变化',
+                translated_content: '市场预计欧央行将维持利率不变，但可能在前瞻指引中释放更多鸽派信号。',
+                url: 'https://wsj.com', published_at: new Date(now - 7 * 3600000).toISOString(),
+            },
+            {
+                id: '11', source: 'Bloomberg',
+                title: 'Microsoft Azure Cloud Revenue Grows 29% Year-Over-Year, Beats Estimates',
+                translated_title: '微软 Azure 云收入同比增长 29%，超出市场预期',
+                translated_content: 'AI 相关服务需求激增，推动微软云业务持续高速增长。',
+                url: 'https://bloomberg.com', published_at: new Date(now - 9 * 3600000).toISOString(),
+            },
+            {
+                id: '12', source: 'WSJ Markets',
+                title: 'Gold Prices Retreat From Record Highs as Dollar Strengthens',
+                translated_title: '美元走强，金价从历史高位回落',
+                translated_content: '现货黄金下跌 0.6% 至 2,918 美元/盎司，美元指数反弹施压贵金属板块。',
+                url: 'https://wsj.com', published_at: new Date(now - 11 * 3600000).toISOString(),
+            },
+        ];
+
+        // ─── Market Ticker ───
+        function loadMarketData() {
+            renderTicker(MOCK_MARKET_DATA);
+        }
+
+        function renderTicker(items) {
+            const track = document.getElementById('ticker-track');
+            if (!items.length) {
+                track.innerHTML = '<span class="text-slate-500 text-sm">暂无市场数据</span>';
+                return;
+            }
+
+            const html = items.map(item => {
+                const isUp = (item.change_percent || 0) >= 0;
+                const arrow = isUp ? '▲' : '▼';
+                const colorClass = isUp ? 'text-up' : 'text-down';
+                const pct = item.change_percent != null ? Math.abs(item.change_percent).toFixed(2) : '--';
+                const price = item.price != null ? item.price.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '--';
+
+                return `
+                    <div class="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-surface-hover/50 transition-colors cursor-default group">
+                        <span class="text-slate-400 text-xs font-medium group-hover:text-slate-200 transition-colors">${item.name}</span>
+                        <span class="font-mono font-medium text-sm text-slate-200">${price}</span>
+                        <span class="font-mono text-xs ${colorClass}">${arrow} ${pct}%</span>
+                    </div>
+                    <div class="w-px h-4 bg-slate-700/50"></div>
+                `;
+            }).join('');
+
+            track.innerHTML = html + html;
+        }
+
+        // ─── Daily Briefing ───
+        function loadSummary(date) {
+            const container = document.getElementById('briefing-content');
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="skeleton h-8 w-3/4"></div>
+                    <div class="skeleton h-4 w-full"></div>
+                    <div class="skeleton h-4 w-5/6"></div>
+                    <div class="skeleton h-4 w-4/5"></div>
+                    <div class="skeleton h-6 w-1/2 mt-6"></div>
+                    <div class="skeleton h-4 w-full"></div>
+                    <div class="skeleton h-4 w-3/4"></div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                if (date === todayStr()) {
+                    container.innerHTML = marked.parse(MOCK_SUMMARY);
+                } else {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-16 text-center">
+                            <div class="text-5xl mb-4">📭</div>
+                            <h3 class="text-lg font-semibold text-slate-300 mb-2">暂无简报</h3>
+                            <p class="text-sm text-slate-500 max-w-xs">${date} 的市场简报尚未生成，请稍后再来查看。</p>
+                        </div>
+                    `;
+                }
+            }, 600);
+        }
+
+        // ─── News Feed ───
+        function loadNews() {
+            allNews = MOCK_NEWS;
+            setTimeout(() => { filterNews(); }, 400);
+        }
+
+        function filterNews() {
+            const source = document.getElementById('source-filter').value;
+            const search = document.getElementById('search-input').value.toLowerCase();
+
+            let filtered = allNews;
+            if (source !== 'all') {
+                filtered = filtered.filter(n => n.source === source);
+            }
+            if (search) {
+                filtered = filtered.filter(n =>
+                    (n.translated_title || '').toLowerCase().includes(search) ||
+                    (n.title || '').toLowerCase().includes(search)
+                );
+            }
+
+            document.getElementById('news-count').textContent = filtered.length;
+            renderNews(filtered);
+        }
+
+        function renderNews(items) {
+            const container = document.getElementById('news-list');
+
+            if (!items.length) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-500">
+                        <div class="text-3xl mb-2">🔍</div>
+                        <p class="text-sm">没有找到匹配的新闻</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const cfg = getSourceConfig(item.source);
+                const title = item.translated_title || item.title;
+                const subtitle = item.translated_title ? item.title : '';
+                const desc = item.translated_content || item.description || '';
+                const time = timeAgo(item.published_at);
+
+                return `
+                    <a href="${item.url}" target="_blank" rel="noopener"
+                       class="block bg-surface rounded-xl border border-border-subtle p-4 hover:bg-surface-hover hover:border-slate-600 transition-all duration-200 group cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2.5">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold text-white ${cfg.color}">${cfg.label}</span>
+                            <span class="text-[11px] text-slate-500">${time}</span>
+                        </div>
+                        <h3 class="text-[15px] font-medium text-slate-200 group-hover:text-white transition-colors leading-snug mb-1.5 line-clamp-2">${title}</h3>
+                        ${subtitle ? `<p class="text-xs text-slate-500 leading-relaxed line-clamp-1 mb-1.5">${subtitle}</p>` : ''}
+                        ${desc ? `<p class="text-xs text-slate-400 leading-relaxed line-clamp-2">${desc}</p>` : ''}
+                    </a>
+                `;
+            }).join('');
+        }
+
+        // ─── Init ───
+        document.getElementById('selected-date-text').textContent = formatDateCN(todayStr());
+        loadMarketData();
+        loadSummary(todayStr());
+        loadNews();
+
+        // Init Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

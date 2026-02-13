@@ -28,7 +28,6 @@ const TRACKED_SYMBOLS: Record<string, { name: string; type: 'index' | 'stock' | 
     '^KS11': { name: '韩国KOSPI', type: 'index' },
 };
 
-const YAHOO_QUOTE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
 const YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
 export class MarketDataService {
@@ -40,15 +39,38 @@ export class MarketDataService {
     }
 
     /**
-     * Batch fetch real-time quotes from Yahoo Finance.
-     * Returns MarketDataItem[] for today's date.
+     * Fetch latest quotes using the chart API (v7 quote API is deprecated/401).
+     * Uses range=5d to ensure we get at least the most recent trading day.
      */
     async fetchQuotes(symbols?: string[]): Promise<MarketDataItem[]> {
         const targetSymbols = symbols || Object.keys(TRACKED_SYMBOLS);
-        const symbolsParam = targetSymbols.join(',');
-        const url = `${YAHOO_QUOTE_URL}?symbols=${encodeURIComponent(symbolsParam)}`;
+        console.log(`[MarketData] Fetching quotes for ${targetSymbols.length} symbols via chart API...`);
 
-        console.log(`[MarketData] Fetching quotes for ${targetSymbols.length} symbols...`);
+        const items: MarketDataItem[] = [];
+
+        for (const symbol of targetSymbols) {
+            try {
+                const data = await this.fetchChartData(symbol, '5d', '1d');
+                if (data) items.push(data);
+            } catch (error) {
+                console.error(`[MarketData] Error fetching quote for ${symbol}:`, error);
+                // Continue with other symbols
+            }
+        }
+
+        console.log(`[MarketData] Fetched ${items.length} quotes.`);
+        return items;
+    }
+
+    /**
+     * Fetch the latest data point from chart API for a single symbol.
+     * Returns only the most recent trading day's data.
+     */
+    private async fetchChartData(symbol: string, range: string, interval: string): Promise<MarketDataItem | null> {
+        const config = TRACKED_SYMBOLS[symbol];
+        if (!config) return null;
+
+        const url = `${YAHOO_CHART_URL}/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`;
 
         const response = await fetch(url, {
             headers: {
@@ -58,43 +80,47 @@ export class MarketDataService {
 
         if (!response.ok) {
             const body = await response.text();
-            throw new Error(`Yahoo Finance quote API error: ${response.status} - ${body.substring(0, 200)}`);
+            console.error(`[MarketData] Chart API error for ${symbol}: ${response.status} - ${body.substring(0, 200)}`);
+            return null;
         }
 
         const data: any = await response.json();
-        const results: any[] = data?.quoteResponse?.result || [];
-        const items: MarketDataItem[] = [];
+        const result = data?.chart?.result?.[0];
+        if (!result) return null;
 
-        for (const quote of results) {
-            const symbol = quote.symbol;
-            const config = TRACKED_SYMBOLS[symbol];
-            if (!config) continue;
+        const meta = result.meta || {};
+        const timestamps: number[] = result.timestamp || [];
+        const quotes = result.indicators?.quote?.[0] || {};
+        const closes: number[] = quotes.close || [];
+        const highs: number[] = quotes.high || [];
+        const lows: number[] = quotes.low || [];
 
-            // Determine the date from the market time
-            const marketTimeEpoch = quote.regularMarketTime; // Unix timestamp
-            const dateStr = marketTimeEpoch
-                ? new Date(marketTimeEpoch * 1000).toISOString().split('T')[0]
-                : new Date().toISOString().split('T')[0];
+        // Get the last valid data point
+        let lastIdx = timestamps.length - 1;
+        while (lastIdx >= 0 && closes[lastIdx] == null) lastIdx--;
+        if (lastIdx < 0) return null;
 
-            items.push({
-                symbol,
-                name: config.name,
-                type: config.type,
-                price: quote.regularMarketPrice ?? null,
-                change_amount: quote.regularMarketChange ?? null,
-                change_percent: quote.regularMarketChangePercent ?? null,
-                day_high: quote.regularMarketDayHigh ?? null,
-                day_low: quote.regularMarketDayLow ?? null,
-                previous_close: quote.regularMarketPreviousClose ?? null,
-                market_time: marketTimeEpoch
-                    ? new Date(marketTimeEpoch * 1000).toISOString()
-                    : null,
-                date: dateStr,
-            });
-        }
+        const ts = timestamps[lastIdx];
+        const closePrice = closes[lastIdx];
+        const prevClose = meta.chartPreviousClose ?? (lastIdx > 0 ? closes[lastIdx - 1] : null);
+        const changeAmount = prevClose != null ? closePrice - prevClose : null;
+        const changePercent = prevClose != null && prevClose !== 0
+            ? ((closePrice - prevClose) / prevClose) * 100
+            : null;
 
-        console.log(`[MarketData] Parsed ${items.length} quotes.`);
-        return items;
+        return {
+            symbol,
+            name: config.name,
+            type: config.type,
+            price: Math.round(closePrice * 100) / 100,
+            change_amount: changeAmount != null ? Math.round(changeAmount * 100) / 100 : null,
+            change_percent: changePercent != null ? Math.round(changePercent * 100) / 100 : null,
+            day_high: highs[lastIdx] ?? null,
+            day_low: lows[lastIdx] ?? null,
+            previous_close: prevClose != null ? Math.round(prevClose * 100) / 100 : null,
+            market_time: new Date(ts * 1000).toISOString(),
+            date: new Date(ts * 1000).toISOString().split('T')[0],
+        };
     }
 
     /**

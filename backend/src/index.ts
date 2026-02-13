@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { DBService } from './services/db';
 import { RSSService } from './services/rss';
 import { AliyunService } from './services/aliyun';
@@ -6,6 +7,14 @@ import { MarketDataService } from './services/market';
 import { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
+
+// CORS — allow all origins
+app.use('/*', cors({
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type'],
+    maxAge: 86400,
+}));
 
 // API Routes
 app.get('/api/news', async (c) => {
