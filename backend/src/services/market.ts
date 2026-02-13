@@ -26,6 +26,16 @@ const TRACKED_SYMBOLS: Record<string, { name: string; type: 'index' | 'stock' | 
     '^AXJO': { name: '澳大利亚ASX200', type: 'index' },
     // 🇰🇷 South Korea
     '^KS11': { name: '韩国KOSPI', type: 'index' },
+
+    // 🏆 Commodities
+    'GC=F': { name: '黄金', type: 'commodity' },
+    'SI=F': { name: '白银', type: 'commodity' },
+    'HG=F': { name: '铜', type: 'commodity' },
+    'CL=F': { name: 'WTI原油', type: 'commodity' },
+    'NG=F': { name: '天然气', type: 'commodity' },
+    'ZS=F': { name: '大豆', type: 'commodity' },
+    'ZC=F': { name: '玉米', type: 'commodity' },
+    'ZW=F': { name: '小麦', type: 'commodity' },
 };
 
 const YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
@@ -102,7 +112,21 @@ export class MarketDataService {
 
         const ts = timestamps[lastIdx];
         const closePrice = closes[lastIdx];
-        const prevClose = meta.chartPreviousClose ?? (lastIdx > 0 ? closes[lastIdx - 1] : null);
+
+        // Previous close = the second-to-last valid close in the data
+        // (NOT chartPreviousClose, which is close before the entire range)
+        let prevClose: number | null = null;
+        for (let i = lastIdx - 1; i >= 0; i--) {
+            if (closes[i] != null) {
+                prevClose = closes[i];
+                break;
+            }
+        }
+        // Fallback: use meta.previousClose if only 1 data point
+        if (prevClose == null) {
+            prevClose = meta.previousClose ?? meta.chartPreviousClose ?? null;
+        }
+
         const changeAmount = prevClose != null ? closePrice - prevClose : null;
         const changePercent = prevClose != null && prevClose !== 0
             ? ((closePrice - prevClose) / prevClose) * 100

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
 import Markdown from 'react-markdown'
 import { todayStr, formatDateCN } from '@/lib/utils'
 import { fetchDailySummary } from '@/lib/api'
@@ -10,8 +10,17 @@ export function DailyBriefing() {
     const [loading, setLoading] = useState(true)
     const [calendarOpen, setCalendarOpen] = useState(false)
     const [calendarViewDate, setCalendarViewDate] = useState(new Date())
+    const [copied, setCopied] = useState(false)
     const popoverRef = useRef<HTMLDivElement>(null)
     const triggerRef = useRef<HTMLButtonElement>(null)
+
+    const copyBriefing = useCallback(() => {
+        if (!content) return
+        navigator.clipboard.writeText(content).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        })
+    }, [content])
 
     const loadSummary = useCallback(async (date: string) => {
         setLoading(true)
@@ -92,7 +101,19 @@ export function DailyBriefing() {
 
             {/* Briefing Card */}
             <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden shadow-2xl shadow-black/20">
-                <div className="p-6 lg:p-8 prose-finance custom-scroll max-h-[calc(100vh-180px)] overflow-y-auto">
+                {/* Copy button */}
+                {content && !loading && (
+                    <div className="flex justify-end px-6 pt-4 pb-0 lg:px-8">
+                        <button
+                            onClick={copyBriefing}
+                            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors px-2.5 py-1 rounded-lg hover:bg-surface-hover"
+                        >
+                            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copied ? '已复制' : '复制 MD'}
+                        </button>
+                    </div>
+                )}
+                <div className={`p-6 lg:p-8 ${content && !loading ? 'pt-2 lg:pt-2' : ''} prose-finance custom-scroll max-h-[calc(100vh-180px)] overflow-y-auto`}>
                     {loading ? (
                         <div className="space-y-4">
                             <div className="skeleton h-8 w-3/4" />
