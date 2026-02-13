@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: VestLab Finance News API
+  description: |
+    基于 Cloudflare Workers 的财经新闻聚合与 AI 分析后端。
+    - 自动抓取 Bloomberg / WSJ RSS 新闻
+    - AI 生成每日美股市场总结报告
+    - AI 翻译新闻标题和描述为中文
+  version: 1.0.0
+  contact:
+    name: VestLab
+
+servers:
+  - url: https://vestlab-finance-news.{account}.workers.dev
+    description: Production (Cloudflare Workers)
+    variables:
+      account:
+        default: your-account
+  - url: http://localhost:8787
+    description: Local Development
+
+tags:
+  - name: Public API
+    description: 公开数据接口
+  - name: Triggers
+    description: 手动触发任务（调试/运维用）
+
+paths:
+  /:
+    get:
+      tags: [Public API]
+      summary: 健康检查
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Worker 运行正常
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: VestLab Finance News Worker (Hono)
+
+  /api/news:
+    get:
+      tags: [Public API]
+      summary: 获取最新新闻列表
+      description: 返回最近的新闻列表，包含中文翻译（如有）。按发布时间倒序排列。
+      operationId: getLatestNews
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: 返回条数，默认 50
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: 新闻列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NewsItemWithTranslation'
+
+  /api/daily-summary:
+    get:
+      tags: [Public API]
+      summary: 获取每日市场总结报告
+      description: |
+        获取指定日期的 AI 生成市场总结报告。
+        - 每天 21:30 UTC（美股收盘后 30 分钟）自动生成。
+        - 如果当天没有报告，返回提示信息。
+      operationId: getDailySummary
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: 日期，格式 YYYY-MM-DD，默认为今天
+          schema:
+            type: string
+            format: date
+            example: '2026-02-12'
+      responses:
+        '200':
+          description: 每日总结
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummaryResponse'
+
+  /trigger-fetch:
+    get:
+      tags: [Triggers]
+      summary: 手动触发新闻抓取
+      description: 立即从 Bloomberg 和 WSJ 抓取 RSS 新闻并存储。
+      operationId: triggerFetch
+      responses:
+        '200':
+          description: 抓取完成
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Fetch triggered
+
+  /trigger-summary:
+    get:
+      tags: [Triggers]
+      summary: 手动触发每日总结 + 翻译
+      description: |
+        手动生成今日市场总结报告，并触发未翻译新闻的中文翻译。
+        如果今日报告已存在，则跳过生成。
+      operationId: triggerSummary
+      responses:
+        '200':
+          description: 总结和翻译任务已触发
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Daily Briefing (and Translation) generation triggered
+
+  /trigger-translation:
+    get:
+      tags: [Triggers]
+      summary: 手动触发翻译
+      description: 翻译最近 24 小时内未翻译的新闻标题和描述为中文。
+      operationId: triggerTranslation
+      responses:
+        '200':
+          description: 翻译任务已触发
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Translation generation triggered
+
+components:
+  schemas:
+    NewsItemWithTranslation:
+      type: object
+      description: 新闻条目（含翻译）
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 新闻 UUID
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        source:
+          type: string
+          description: 新闻来源
+          enum: [Bloomberg, WSJ]
+          example: Bloomberg
+        title:
+          type: string
+          description: 原始标题（英文）
+          example: 'S&P 500 Rises as Tech Stocks Rally'
+        url:
+          type: string
+          format: uri
+          description: 原文链接
+          example: 'https://www.bloomberg.com/news/...'
+        published_at:
+          type: string
+          format: date-time
+          description: 发布时间
+          example: '2026-02-12T21:00:00Z'
+        author:
+          type: string
+          nullable: true
+          description: 作者
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          description: 配图 URL
+        tags:
+          type: string
+          nullable: true
+          description: 标签（逗号分隔）
+        description:
+          type: string
+          nullable: true
+          description: RSS 简述（英文）
+        raw_content:
+          type: string
+          nullable: true
+          description: 全文内容（如有爬取）
+        crawled_at:
+          type: string
+          format: date-time
+          description: 抓取时间
+        translated_title:
+          type: string
+          nullable: true
+          description: 中文标题
+          example: '科技股反弹推动标普500指数上涨'
+        translated_content:
+          type: string
+          nullable: true
+          description: 中文简述
+          example: '受科技板块强劲表现带动，标普500指数周三收涨...'
+
+    DailySummaryResponse:
+      type: object
+      description: 每日市场总结响应
+      properties:
+        date:
+          type: string
+          format: date
+          description: 日期
+          example: '2026-02-12'
+        summary:
+          type: string
+          description: AI 生成的市场总结报告（中文），如无则返回提示
+          example: |
+            ## 今日美股市场总结
+
+            **宏观综述**：今日市场整体呈现震荡上行态势...
+
+            **板块分析**：科技板块表现强势...
+
+            **关键事件**：...
+
+            **明日展望**：...
+      required:
+        - date
+        - summary

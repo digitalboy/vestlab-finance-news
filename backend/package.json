@@ -1,0 +1,27 @@
+{
+  "name": "vestlab-finance-news",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260212.0",
+    "fast-xml-parser": "^5.3.5",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.65.0"
+  },
+  "dependencies": {
+    "hono": "^4.11.9"
+  }
+}

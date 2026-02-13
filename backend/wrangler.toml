@@ -1,0 +1,31 @@
+name = "vestlab-finance-news"
+main = "src/index.ts"
+compatibility_date = "2024-02-08"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "note-to-audio-db"
+database_id = "dec8c4bf-98bd-4e9a-b32b-ba613d6f8b09" # Shared DB
+
+# Cron Triggers
+[triggers]
+crons = [
+    "*/15 * * * *", # Fetch News (Every 15 mins)
+    "30 21 * * *",  # Summarize (Daily at 21:30 UTC)
+]
+
+[observability]
+enabled = false
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1
