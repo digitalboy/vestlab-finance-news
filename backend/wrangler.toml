@@ -1,4 +1,4 @@
-name = "vestlab-finance-news"
+name = "vestlab-finance-news-backend"
 main = "src/index.ts"
 compatibility_date = "2024-02-08"
 

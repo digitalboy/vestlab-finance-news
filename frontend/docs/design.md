@@ -145,7 +145,7 @@ shadcn/ui 默认使用 CSS 变量 + HSL 色彩。在 `src/index.css` 中通过 `
 ## API 集成
 
 ```typescript
-const API_BASE = 'https://vestlab-finance-news.digitalboyzone.workers.dev';
+const API_BASE = 'https://vestlab-finance-news-backend.digitalboyzone.workers.dev';
 
 // 1. 获取市场指数
 const marketData = await fetch(`${API_BASE}/api/market-data`).then(r => r.json());

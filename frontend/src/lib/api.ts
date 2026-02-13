@@ -1,6 +1,6 @@
 import type { MarketDataResponse, NewsItem, DailySummaryResponse } from './types'
 
-const API_BASE = 'https://vestlab-finance-news.digitalboyzone.workers.dev'
+const API_BASE = 'https://vestlab-finance-news-backend.digitalboyzone.workers.dev'
 
 export async function fetchMarketData(): Promise<MarketDataResponse> {
     const res = await fetch(`${API_BASE}/api/market-data`)
