@@ -6,7 +6,8 @@ info:
     - 自动抓取 Bloomberg / WSJ RSS 新闻
     - AI 生成每日美股市场总结报告
     - AI 翻译新闻标题和描述为中文
-  version: 1.0.0
+    - 全球主要股市指数实时数据（Yahoo Finance）
+  version: 1.1.0
   contact:
     name: VestLab
 
@@ -73,6 +74,7 @@ paths:
       description: |
         获取指定日期的 AI 生成市场总结报告。
         - 每天 21:30 UTC（美股收盘后 30 分钟）自动生成。
+        - 报告包含从 Yahoo Finance 获取的真实指数数据。
         - 如果当天没有报告，返回提示信息。
       operationId: getDailySummary
       parameters:
@@ -83,7 +85,7 @@ paths:
           schema:
             type: string
             format: date
-            example: '2026-02-12'
+            example: '2026-02-13'
       responses:
         '200':
           description: 每日总结
@@ -91,6 +93,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DailySummaryResponse'
+
+  /api/market-data:
+    get:
+      tags: [Public API]
+      summary: 获取市场指数数据
+      description: |
+        获取全球主要股市指数数据。
+        - 不传 date 参数时返回最新数据。
+        - 覆盖指数：标普500、纳斯达克、道琼斯、上证综指、深证成指、恒生、日经225、富时100、DAX、CAC40、ASX200、KOSPI。
+        - 未来支持大宗商品和个股。
+      operationId: getMarketData
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: 日期，格式 YYYY-MM-DD，不传则返回最新数据
+          schema:
+            type: string
+            format: date
+            example: '2026-02-13'
+      responses:
+        '200':
+          description: 市场指数数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketDataResponse'
 
   /trigger-fetch:
     get:
@@ -139,6 +168,37 @@ paths:
                 type: string
                 example: Translation generation triggered
 
+  /trigger-market-fetch:
+    get:
+      tags: [Triggers]
+      summary: 手动触发市场数据抓取
+      description: |
+        从 Yahoo Finance 抓取全球主要指数数据。
+        - 首次调用会执行冷启动，拉取近 90 天历史数据。
+        - 后续调用只更新当日最新报价。
+      operationId: triggerMarketFetch
+      responses:
+        '200':
+          description: 市场数据抓取结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  action:
+                    type: string
+                    enum: [cold_start, daily_update, error]
+                    description: 执行的操作类型
+                    example: daily_update
+                  saved:
+                    type: integer
+                    description: 保存的记录数
+                    example: 12
+                  error:
+                    type: string
+                    nullable: true
+                    description: 错误信息（仅 action=error 时有值）
+
 components:
   schemas:
     NewsItemWithTranslation:
@@ -153,7 +213,7 @@ components:
         source:
           type: string
           description: 新闻来源
-          enum: [Bloomberg, WSJ]
+          enum: [Bloomberg, WSJ Markets, WSJ Economy, WSJ World]
           example: Bloomberg
         title:
           type: string
@@ -168,7 +228,7 @@ components:
           type: string
           format: date-time
           description: 发布时间
-          example: '2026-02-12T21:00:00Z'
+          example: '2026-02-13T21:00:00Z'
         author:
           type: string
           nullable: true
@@ -205,6 +265,84 @@ components:
           description: 中文简述
           example: '受科技板块强劲表现带动，标普500指数周三收涨...'
 
+    MarketDataItem:
+      type: object
+      description: 市场数据条目（指数/个股/商品）
+      properties:
+        id:
+          type: integer
+          description: 自增 ID
+        symbol:
+          type: string
+          description: Yahoo Finance 代码
+          example: '^GSPC'
+        name:
+          type: string
+          description: 中文名称
+          example: '标普500'
+        type:
+          type: string
+          enum: [index, stock, commodity]
+          description: 数据类型
+          example: index
+        price:
+          type: number
+          nullable: true
+          description: 收盘/最新价
+          example: 6142.30
+        change_amount:
+          type: number
+          nullable: true
+          description: 涨跌额
+          example: 50.12
+        change_percent:
+          type: number
+          nullable: true
+          description: 涨跌幅 (%)
+          example: 0.82
+        day_high:
+          type: number
+          nullable: true
+          description: 日内最高价
+        day_low:
+          type: number
+          nullable: true
+          description: 日内最低价
+        previous_close:
+          type: number
+          nullable: true
+          description: 前收盘价
+        market_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: 数据时间（交易所当地时间）
+        fetched_at:
+          type: string
+          format: date-time
+          description: 抓取时间 (UTC)
+        date:
+          type: string
+          format: date
+          description: 日期
+          example: '2026-02-13'
+
+    MarketDataResponse:
+      type: object
+      description: 市场数据响应
+      properties:
+        count:
+          type: integer
+          description: 返回的数据条数
+          example: 12
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketDataItem'
+      required:
+        - count
+        - data
+
     DailySummaryResponse:
       type: object
       description: 每日市场总结响应
@@ -213,7 +351,7 @@ components:
           type: string
           format: date
           description: 日期
-          example: '2026-02-12'
+          example: '2026-02-13'
         summary:
           type: string
           description: AI 生成的市场总结报告（中文），如无则返回提示
@@ -230,3 +368,4 @@ components:
       required:
         - date
         - summary
+

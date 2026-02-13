@@ -1,4 +1,4 @@
-import { Env } from '../types';
+import { Env, MarketDataItem } from '../types';
 
 const DASHSCOPE_ENDPOINT = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
 const CLOUDFLARE_AI_GATEWAY = 'https://gateway.ai.cloudflare.com/v1/d06c9445a2675bdbf52fe47eab4f0278/beike/compat';
@@ -125,7 +125,56 @@ export class AliyunService {
         }
     }
 
-    async generateMarketReport(newsItems: any[]): Promise<string | null> {
+    /**
+     * Format market data into a readable block for prompt injection.
+     */
+    private formatMarketDataForPrompt(marketData: MarketDataItem[]): string {
+        if (!marketData || marketData.length === 0) return '';
+
+        const indices = marketData.filter(m => m.type === 'index');
+        const commodities = marketData.filter(m => m.type === 'commodity');
+        const stocks = marketData.filter(m => m.type === 'stock');
+
+        let block = '\n📊 **全球市场实时数据（来自 Yahoo Finance）**：\n';
+        block += '⚠️ 以下数据为真实市场数据，请在报告中准确引用，不要编造或修改数字。\n\n';
+
+        if (indices.length > 0) {
+            block += '**主要指数：**\n';
+            for (const m of indices) {
+                const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
+                const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+                const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
+                block += `- ${m.name} (${m.symbol}): ${price} (${change})\n`;
+            }
+            block += '\n';
+        }
+
+        if (commodities.length > 0) {
+            block += '**大宗商品：**\n';
+            for (const m of commodities) {
+                const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
+                const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+                const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
+                block += `- ${m.name} (${m.symbol}): ${price} (${change})\n`;
+            }
+            block += '\n';
+        }
+
+        if (stocks.length > 0) {
+            block += '**个股：**\n';
+            for (const m of stocks) {
+                const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
+                const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+                const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
+                block += `- ${m.name} (${m.symbol}): ${price} (${change})\n`;
+            }
+            block += '\n';
+        }
+
+        return block;
+    }
+
+    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = []): Promise<string | null> {
         if (!this.aliyunKey || newsItems.length === 0) return null;
 
         const utcDate = new Date().toISOString().split('T')[0];
@@ -133,18 +182,20 @@ export class AliyunService {
             `${i + 1}. [${n.source || '未知'}] ${n.title}\n   ${n.description || ''}`
         ).join('\n\n');
 
-        const prompt = `你是 VestLab 的新闻分析工程师 David。今天的日期是 ${utcDate}（UTC）。请基于以下来自 WSJ 和 Bloomberg 的新闻，撰写一份面向中国投资者的 **每日全球市场简报**。
+        const marketDataBlock = this.formatMarketDataForPrompt(marketData);
+
+        const prompt = `你是 VestLab 的新闻分析工程师 David。今天的日期是 ${utcDate}（UTC）。请基于以下市场数据和新闻，撰写一份面向中国投资者的 **每日全球市场简报**。
 
 新闻源涵盖四个维度：
 - **WSJ Markets**：美股、债券、大宗商品、投资趋势
 - **WSJ Economy**：就业、通胀、房地产等宏观经济数据
 - **WSJ World**：国际地缘政治、贸易关系、能源政策
 - **Bloomberg Markets**：全球股市、央行政策、并购IPO、加密货币
-
+${marketDataBlock}
 **报告结构**（使用 Markdown 格式）：
 
 ## 📊 市场脉搏
-用 2-3 句话概括今日全球市场整体情绪和核心主线。
+用 2-3 句话概括今日全球市场整体情绪和核心主线。引用上方的真实指数数据。
 
 ## 🔥 焦点事件
 挑选 3-5 条最重要的新闻深度解读，每条包含：
@@ -153,7 +204,7 @@ export class AliyunService {
 - 对中国投资者的启示
 
 ## 📈 资产联动
-简述各大类资产表现联动：美股（分板块）、美债、美元、黄金、原油、加密货币等。
+引用上方的真实指数和商品数据，简述各大类资产表现联动：美股（分板块）、美债、美元、黄金、原油、加密货币等。
 
 ## 🌍 地缘与政策
 梳理可能影响市场的地缘政治动态和重要政策变化。
@@ -167,6 +218,7 @@ export class AliyunService {
 - 适当使用 emoji 增强可读性
 - 站在全球视角，但突出对中国投资者的相关性
 - 对于涉及中国的新闻（如中国汽车、贸易关系等），要特别深入分析
+- **必须准确引用上方提供的市场数据，不要编造任何数字**
 - 报告末尾署名：VestLab 新闻分析工程师 David，并注明日期 ${utcDate}
 
 **今日新闻列表**（共 ${newsItems.length} 条）：
@@ -181,3 +233,4 @@ ${newsContext}
         }
     }
 }
+

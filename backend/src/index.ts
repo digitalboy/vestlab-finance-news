@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { DBService } from './services/db';
 import { RSSService } from './services/rss';
 import { AliyunService } from './services/aliyun';
+import { MarketDataService } from './services/market';
 import { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -19,6 +20,15 @@ app.get('/api/daily-summary', async (c) => {
     const date = c.req.query('date') || new Date().toISOString().split('T')[0];
     const summary = await db.getDailySummary(date);
     return c.json({ date, summary: summary || 'No summary available for this date.' });
+});
+
+app.get('/api/market-data', async (c) => {
+    const db = new DBService(c.env.DB);
+    const date = c.req.query('date');
+    const data = date
+        ? await db.getMarketDataByDate(date)
+        : await db.getLatestMarketData();
+    return c.json({ count: data.length, data });
 });
 
 // Manual Triggers
@@ -49,6 +59,13 @@ app.get('/trigger-translation', async (c) => {
     return c.text('Translation generation triggered');
 });
 
+app.get('/trigger-market-fetch', async (c) => {
+    const db = new DBService(c.env.DB);
+    const market = new MarketDataService();
+    const result = await fetchMarketData(db, market);
+    return c.json(result);
+});
+
 app.get('/', (c) => c.text('VestLab Finance News Worker (Hono)'));
 
 // Export functions for Worker (fetch) and Cron (scheduled)
@@ -58,17 +75,24 @@ export default {
         const db = new DBService(env.DB);
         const rss = new RSSService();
         const ai = new AliyunService(env);
+        const market = new MarketDataService();
 
         console.log(`Cron triggered: ${event.cron}`);
 
         if (event.cron === '*/15 * * * *') {
             // Fetch news, then translate any untranslated items
+            // Also fetch market data on each cycle
             ctx.waitUntil(
-                fetchNews(db, rss).then(() => generateTranslations(db, ai))
+                Promise.all([
+                    fetchNews(db, rss).then(() => generateTranslations(db, ai)),
+                    fetchMarketData(db, market),
+                ])
             );
         } else if (event.cron === '30 21 * * *') {
-            // 21:30 UTC: Daily Briefing
-            ctx.waitUntil(generateDailyBriefing(db, ai));
+            // 21:30 UTC: Fetch latest market data, then generate daily briefing
+            ctx.waitUntil(
+                fetchMarketData(db, market).then(() => generateDailyBriefing(db, ai))
+            );
         } else {
             console.log('Unknown cron trigger, running default fetch + translate');
             ctx.waitUntil(
@@ -105,6 +129,29 @@ async function fetchNews(db: DBService, rss: RSSService) {
     }
 }
 
+async function fetchMarketData(db: DBService, market: MarketDataService) {
+    try {
+        // Check if we need cold start (no historical data yet)
+        const hasData = await db.hasMarketData();
+
+        if (!hasData) {
+            console.log('[MarketData] No data found, running cold start...');
+            const historicalItems = await market.coldStart();
+            const saved = await db.saveMarketDataBatch(historicalItems);
+            return { action: 'cold_start', saved };
+        }
+
+        // Daily incremental: fetch latest quotes
+        console.log('[MarketData] Fetching latest quotes...');
+        const quotes = await market.fetchQuotes();
+        const saved = await db.saveMarketDataBatch(quotes);
+        return { action: 'daily_update', saved };
+    } catch (error) {
+        console.error('[MarketData] Error fetching market data:', error);
+        return { action: 'error', error: String(error) };
+    }
+}
+
 async function generateDailyBriefing(db: DBService, ai: AliyunService) {
     const today = new Date().toISOString().split('T')[0];
     console.log(`Checking daily briefing for ${today}...`);
@@ -124,7 +171,11 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService) {
         return;
     }
 
-    const report = await ai.generateMarketReport(todayNews);
+    // Fetch today's market data for the report
+    const marketData = await db.getLatestMarketData();
+    console.log(`Found ${marketData.length} market data items for report.`);
+
+    const report = await ai.generateMarketReport(todayNews, marketData);
 
     if (report) {
         // Format: 2026-02-13 → 2026年02月13日

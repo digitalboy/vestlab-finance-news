@@ -1,4 +1,4 @@
-import { NewsItem } from '../types';
+import { NewsItem, MarketDataItem } from '../types';
 
 export class DBService {
     private db: D1Database;
@@ -106,5 +106,66 @@ export class DBService {
         await this.db.prepare(
             'INSERT OR REPLACE INTO daily_summaries (date, content) VALUES (?, ?)'
         ).bind(date, content).run();
+    }
+
+    // --- Market Data Methods ---
+
+    async saveMarketData(item: MarketDataItem): Promise<void> {
+        try {
+            await this.db.prepare(
+                `INSERT OR REPLACE INTO market_data
+                 (symbol, name, type, price, change_amount, change_percent, day_high, day_low, previous_close, market_time, date)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            ).bind(
+                item.symbol,
+                item.name,
+                item.type,
+                item.price,
+                item.change_amount,
+                item.change_percent,
+                item.day_high,
+                item.day_low,
+                item.previous_close,
+                item.market_time,
+                item.date
+            ).run();
+        } catch (e) {
+            console.error(`Error saving market data for ${item.symbol}:`, e);
+        }
+    }
+
+    async saveMarketDataBatch(items: MarketDataItem[]): Promise<number> {
+        let saved = 0;
+        for (const item of items) {
+            await this.saveMarketData(item);
+            saved++;
+        }
+        console.log(`[DB] Saved ${saved} market data records.`);
+        return saved;
+    }
+
+    async getMarketDataByDate(date: string): Promise<MarketDataItem[]> {
+        const { results } = await this.db.prepare(
+            'SELECT * FROM market_data WHERE date = ? ORDER BY type, symbol'
+        ).bind(date).all<MarketDataItem>();
+        return results;
+    }
+
+    async getLatestMarketData(): Promise<MarketDataItem[]> {
+        // Get the most recent date that has data, then return all records for that date
+        const latest = await this.db.prepare(
+            'SELECT MAX(date) as max_date FROM market_data'
+        ).first<{ max_date: string }>();
+
+        if (!latest?.max_date) return [];
+
+        return this.getMarketDataByDate(latest.max_date);
+    }
+
+    async hasMarketData(): Promise<boolean> {
+        const result = await this.db.prepare(
+            'SELECT 1 FROM market_data LIMIT 1'
+        ).first();
+        return !!result;
     }
 }
