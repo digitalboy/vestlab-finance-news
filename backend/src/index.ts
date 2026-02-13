@@ -131,17 +131,23 @@ async function fetchNews(db: DBService, rss: RSSService) {
 
 async function fetchMarketData(db: DBService, market: MarketDataService) {
     try {
-        // Check if we need cold start (no historical data yet)
-        const hasData = await db.hasMarketData();
+        // Check which symbols already have historical data
+        const existingSymbols = await db.getSymbolsWithHistory();
+        const allSymbols = Object.keys(market.getTrackedSymbols());
+        const missingCount = allSymbols.filter(s => !existingSymbols.has(s)).length;
 
-        if (!hasData) {
-            console.log('[MarketData] No data found, running cold start...');
-            const historicalItems = await market.coldStart();
+        // If any symbols are missing history, run cold start for those
+        if (missingCount > 0) {
+            console.log(`[MarketData] ${missingCount}/${allSymbols.length} symbols need cold start...`);
+            const historicalItems = await market.coldStart(existingSymbols);
             const saved = await db.saveMarketDataBatch(historicalItems);
-            return { action: 'cold_start', saved };
+            // Also fetch latest quotes after cold start
+            const quotes = await market.fetchQuotes();
+            const quoteSaved = await db.saveMarketDataBatch(quotes);
+            return { action: 'cold_start', history_saved: saved, quotes_saved: quoteSaved, missing: missingCount };
         }
 
-        // Daily incremental: fetch latest quotes
+        // All symbols have history — just do daily update
         console.log('[MarketData] Fetching latest quotes...');
         const quotes = await market.fetchQuotes();
         const saved = await db.saveMarketDataBatch(quotes);

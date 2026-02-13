@@ -162,10 +162,10 @@ export class DBService {
         return this.getMarketDataByDate(latest.max_date);
     }
 
-    async hasMarketData(): Promise<boolean> {
-        const result = await this.db.prepare(
-            'SELECT 1 FROM market_data LIMIT 1'
-        ).first();
-        return !!result;
+    async getSymbolsWithHistory(): Promise<Set<string>> {
+        const { results } = await this.db.prepare(
+            'SELECT DISTINCT symbol FROM market_data'
+        ).all<{ symbol: string }>();
+        return new Set(results.map(r => r.symbol));
     }
 }

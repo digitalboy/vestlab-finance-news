@@ -174,14 +174,22 @@ export class MarketDataService {
     }
 
     /**
-     * Cold start: fetch 90-day history for all tracked symbols.
-     * Returns all items (caller is responsible for saving).
+     * Cold start: fetch 90-day history for tracked symbols that are missing.
+     * @param existingSymbols - symbols that already have data (will be skipped)
      */
-    async coldStart(): Promise<MarketDataItem[]> {
-        console.log('[MarketData] Starting cold start (90-day history)...');
+    async coldStart(existingSymbols: Set<string> = new Set()): Promise<MarketDataItem[]> {
+        const allSymbols = Object.keys(TRACKED_SYMBOLS);
+        const missingSymbols = allSymbols.filter(s => !existingSymbols.has(s));
+
+        if (missingSymbols.length === 0) {
+            console.log('[MarketData] All symbols have history. Skipping cold start.');
+            return [];
+        }
+
+        console.log(`[MarketData] Cold start for ${missingSymbols.length}/${allSymbols.length} symbols...`);
         const allItems: MarketDataItem[] = [];
 
-        for (const symbol of Object.keys(TRACKED_SYMBOLS)) {
+        for (const symbol of missingSymbols) {
             try {
                 const items = await this.fetchHistory(symbol, '3mo');
                 allItems.push(...items);
