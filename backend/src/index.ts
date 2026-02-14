@@ -100,12 +100,17 @@ export default {
 
         console.log(`Cron triggered: ${event.cron}`);
 
-        if (event.cron === '*/15 * * * *') {
+        if (event.cron === '*/10 * * * *') {
             // Fetch news, then translate any untranslated items
             // Also fetch market data on each cycle
+            // OPTIMIZATION: Split RSS fetching to stay within CPU limits
+            // 10-min interval: 00(A), 10(B), 20(A), 30(B), 40(A), 50(B)
+            const minute = new Date(event.scheduledTime).getUTCMinutes();
+            const group = (minute % 20 < 10) ? 'A' : 'B';
+
             ctx.waitUntil(
                 Promise.all([
-                    fetchNews(db, rss).then(() => generateTranslations(db, ai)),
+                    fetchNews(db, rss, group).then(() => generateTranslations(db, ai)),
                     fetchMarketData(db, market),
                 ])
             );
@@ -130,15 +135,24 @@ export default {
 
 // --- Helper Functions ---
 
-async function fetchNews(db: DBService, rss: RSSService) {
-    const sources = [
-        { name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
-        { name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
-        { name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
-        { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
-        { name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
-        { name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+async function fetchNews(db: DBService, rss: RSSService, group: 'A' | 'B' | 'all' = 'all') {
+    const allSources = [
+        // Group A: Markets & Business (High Priority)
+        { group: 'A', name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
+        { group: 'A', name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
+        { group: 'A', name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
+
+        // Group B: Economy & World (Macro)
+        { group: 'B', name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
+        { group: 'B', name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
+        { group: 'B', name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
     ];
+
+    const sources = group === 'all'
+        ? allSources
+        : allSources.filter(s => s.group === group);
+
+    console.log(`[RSS] Fetching group ${group} (${sources.length} sources)...`);
 
     for (const source of sources) {
         try {
@@ -224,7 +238,9 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
 
 async function generateTranslations(db: DBService, ai: AliyunService) {
     console.log('Starting daily translation...');
-    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 20);
+    console.log('Starting daily translation...');
+    // OPTIMIZATION: Reduce batch size to 5 to avoid CPU timeout
+    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 5);
 
     for (const news of newsItems) {
         if (!news.id) continue;
