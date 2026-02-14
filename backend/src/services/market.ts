@@ -4,7 +4,7 @@ import { MarketDataItem } from '../types';
  * Tracked symbols configuration.
  * symbol → { name (Chinese), type }
  */
-const TRACKED_SYMBOLS: Record<string, { name: string; type: 'index' | 'stock' | 'commodity' }> = {
+const TRACKED_SYMBOLS: Record<string, { name: string; type: 'index' | 'stock' | 'commodity' | 'bond' | 'currency' }> = {
     // 🇺🇸 US Indices
     '^GSPC': { name: '标普500', type: 'index' },
     '^IXIC': { name: '纳斯达克综合', type: 'index' },
@@ -36,6 +36,14 @@ const TRACKED_SYMBOLS: Record<string, { name: string; type: 'index' | 'stock' | 
     'ZS=F': { name: '大豆', type: 'commodity' },
     'ZC=F': { name: '玉米', type: 'commodity' },
     'ZW=F': { name: '小麦', type: 'commodity' },
+
+    // 💵 Currency Index
+    'DX-Y.NYB': { name: '美元指数', type: 'currency' },
+
+    // 📈 US Treasury Yields
+    '^TNX': { name: '美国10年期国债', type: 'bond' },
+    '^TYX': { name: '美国30年期国债', type: 'bond' },
+    '^FVX': { name: '美国5年期国债', type: 'bond' },
 };
 
 const YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';

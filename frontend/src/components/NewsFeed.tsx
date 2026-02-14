@@ -9,6 +9,8 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     'WSJ Markets': { color: 'bg-badge-wsj-markets', label: 'WSJ Markets' },
     'WSJ Economy': { color: 'bg-badge-wsj-economy', label: 'WSJ Economy' },
     'WSJ World': { color: 'bg-badge-wsj-world', label: 'WSJ World' },
+    'NYT Business': { color: 'bg-emerald-700', label: 'NYT Biz' },
+    'NYT World': { color: 'bg-teal-700', label: 'NYT World' },
 }
 
 function getSourceConfig(source: string): SourceConfig {
@@ -64,6 +66,8 @@ export function NewsFeed() {
                     <option value="WSJ Markets">WSJ Markets</option>
                     <option value="WSJ Economy">WSJ Economy</option>
                     <option value="WSJ World">WSJ World</option>
+                    <option value="NYT Business">NYT Business</option>
+                    <option value="NYT World">NYT World</option>
                 </select>
             </div>
 

@@ -25,7 +25,7 @@ export interface MarketDataItem {
     id?: number;
     symbol: string;
     name: string;
-    type: 'index' | 'stock' | 'commodity';
+    type: 'index' | 'stock' | 'commodity' | 'bond' | 'currency';
     price: number | null;
     change_amount: number | null;
     change_percent: number | null;

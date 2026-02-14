@@ -131,44 +131,42 @@ export class AliyunService {
     private formatMarketDataForPrompt(marketData: MarketDataItem[]): string {
         if (!marketData || marketData.length === 0) return '';
 
+        // Beijing time today
+        const now = new Date();
+        const bjtToday = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
+
         const indices = marketData.filter(m => m.type === 'index');
         const commodities = marketData.filter(m => m.type === 'commodity');
+        const bonds = marketData.filter(m => m.type === 'bond');
+        const currencies = marketData.filter(m => m.type === 'currency');
         const stocks = marketData.filter(m => m.type === 'stock');
 
-        let block = '\n📊 **全球市场实时数据（来自 Yahoo Finance）**：\n';
-        block += '⚠️ 以下数据为真实市场数据，请在报告中准确引用，不要编造或修改数字。\n\n';
+        const formatLine = (m: MarketDataItem) => {
+            const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
+            const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+            const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
+            const dataDate = m.market_time ? m.market_time.split('T')[0] : '';
+            const stale = dataDate && dataDate !== bjtToday ? ` [${dataDate} \u2014 \u975E\u4ECA\u65E5\u6570\u636E]` : '';
+            return `- ${m.name} (${m.symbol}): ${price} (${change})${stale}`;
+        };
 
-        if (indices.length > 0) {
-            block += '**主要指数：**\n';
-            for (const m of indices) {
-                const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
-                const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
-                const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
-                block += `- ${m.name} (${m.symbol}): ${price} (${change})\n`;
-            }
-            block += '\n';
-        }
+        let block = '\n\ud83d\udcca **\u5168\u7403\u5e02\u573a\u6570\u636e\uff08\u6765\u81ea Yahoo Finance\uff09**\uff1a\n';
+        block += '\u26a0\ufe0f \u4ee5\u4e0b\u6570\u636e\u4e3a\u771f\u5b9e\u5e02\u573a\u6570\u636e\uff0c\u8bf7\u5728\u62a5\u544a\u4e2d\u51c6\u786e\u5f15\u7528\uff0c\u4e0d\u8981\u7f16\u9020\u6216\u4fee\u6539\u6570\u5b57\u3002\u6807\u6ce8\u201c\u975e\u4eca\u65e5\u6570\u636e\u201d\u7684\u8868\u793a\u8be5\u5e02\u573a\u5f53\u65e5\u4f11\u5e02\uff0c\u6570\u636e\u4e3a\u6700\u8fd1\u4e00\u4e2a\u4ea4\u6613\u65e5\u7684\u3002\u8bf7\u81ea\u7136\u5730\u4f7f\u7528\u201c\u4e0a\u4e00\u4ea4\u6613\u65e5\u201d\u6765\u63cf\u8ff0\u8fd9\u4e9b\u5e02\u573a\u3002\n\n';
 
-        if (commodities.length > 0) {
-            block += '**大宗商品：**\n';
-            for (const m of commodities) {
-                const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
-                const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
-                const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
-                block += `- ${m.name} (${m.symbol}): ${price} (${change})\n`;
-            }
-            block += '\n';
-        }
+        const sections: { label: string; items: MarketDataItem[] }[] = [
+            { label: '**主要指数：**', items: indices },
+            { label: '**美元与汇率：**', items: currencies },
+            { label: '**美债收益率：**', items: bonds },
+            { label: '**大宗商品：**', items: commodities },
+            { label: '**个股：**', items: stocks },
+        ];
 
-        if (stocks.length > 0) {
-            block += '**个股：**\n';
-            for (const m of stocks) {
-                const sign = (m.change_amount ?? 0) >= 0 ? '+' : '';
-                const price = m.price != null ? m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
-                const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
-                block += `- ${m.name} (${m.symbol}): ${price} (${change})\n`;
+        for (const sec of sections) {
+            if (sec.items.length > 0) {
+                block += sec.label + '\n';
+                for (const m of sec.items) block += formatLine(m) + '\n';
+                block += '\n';
             }
-            block += '\n';
         }
 
         return block;
@@ -177,7 +175,15 @@ export class AliyunService {
     async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = [], session: 'morning' | 'evening' = 'morning'): Promise<string | null> {
         if (!this.aliyunKey || newsItems.length === 0) return null;
 
-        const utcDate = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const bjt = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+        const bjtDate = bjt.toISOString().split('T')[0];
+        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        const dayOfWeek = weekdays[bjt.getUTCDay()];
+        const isWeekend = bjt.getUTCDay() === 0 || bjt.getUTCDay() === 6;
+        const tradingDayNote = isWeekend
+            ? '（今天是周末，全球主要股市休市，数据为最近一个交易日的收盘数据。请勿使用“今日市场”类表述，应使用“上一交易日”或“本周”来描述。）'
+            : '（今天是交易日）';
         const newsContext = newsItems.map((n, i) =>
             `${i + 1}. [${n.source || '未知'}] ${n.title}\n   ${n.description || ''}`
         ).join('\n\n');
@@ -202,16 +208,19 @@ export class AliyunService {
 - 今日国内政策、经济数据对市场的影响
 - 人民币汇率、北向资金、南向资金等跨境资金流向`;
 
-        const prompt = `你是 VestLab 的新闻分析工程师 David。今天的日期是 ${utcDate}（UTC）。请基于以下市场数据和新闻，撰写一份面向中国投资者的 **每日全球市场${sessionLabel}**。
+        const prompt = `你是 VestLab 的新闻分析工程师 David。今天是 ${bjtDate} ${dayOfWeek}（北京时间）。${tradingDayNote}
+请基于以下市场数据和新闻，撰写一份面向中国投资者的 **每日全球市场${sessionLabel}**。
 
 ${sessionEmoji} **${sessionLabel}定位**：
 ${sessionGuidance}
 
-新闻源涵盖四个维度：
+新闻源涵盖六个维度：
 - **WSJ Markets**：美股、债券、大宗商品、投资趋势
 - **WSJ Economy**：就业、通胀、房地产等宏观经济数据
 - **WSJ World**：国际地缘政治、贸易关系、能源政策
 - **Bloomberg Markets**：全球股市、央行政策、并购IPO、加密货币
+- **NYT Business**：企业动态、科技产业、商业趋势
+- **NYT World**：国际政治、全球热点事件
 ${marketDataBlock}
 **报告结构**（使用 Markdown 格式）：
 
@@ -225,7 +234,7 @@ ${marketDataBlock}
 - 对中国投资者的启示
 
 ## 📈 资产联动
-引用上方的真实指数和商品数据，简述各大类资产表现联动：${session === 'morning' ? '美股（分板块）、美债、美元、黄金、原油、加密货币等' : 'A股（分板块）、港股、日股、人民币、黄金、原油等'}。
+引用上方的真实指数、美元指数、美债收益率和商品数据，分析各大类资产联动逻辑：${session === 'morning' ? '美股（分板块）→ 美债收益率变动 → 美元指数 → 黄金/原油 → 加密货币等' : 'A股（分板块）→ 港股 → 日股 → 人民币汇率 → 美元指数 → 黄金/原油等'}。重点分析美债收益率和美元指数变动对全球资产的传导机制。
 
 ## 🌍 地缘与政策
 梳理可能影响市场的地缘政治动态和重要政策变化。
@@ -240,7 +249,7 @@ ${marketDataBlock}
 - 站在全球视角，但突出对中国投资者的相关性
 - 对于涉及中国的新闻（如中国汽车、贸易关系等），要特别深入分析
 - **必须准确引用上方提供的市场数据，不要编造任何数字**
-- 报告末尾署名：VestLab 新闻分析工程师 David，并注明日期 ${utcDate}（${sessionLabel}）
+- 报告末尾署名：VestLab 新闻分析工程师 David，并注明日期 ${bjtDate} ${dayOfWeek}（${sessionLabel}）
 
 **今日新闻列表**（共 ${newsItems.length} 条）：
 ${newsContext}
