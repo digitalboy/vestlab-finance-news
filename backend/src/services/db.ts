@@ -19,7 +19,7 @@ export class DBService {
         console.log(`Saving news: ${news.title} (${news.url})`);
         try {
             await this.db.prepare(
-                `INSERT INTO news (id, source, title, url, published_at, author, image_url, tags, description, raw_content)
+                `INSERT OR IGNORE INTO news (id, source, title, url, published_at, author, image_url, tags, description, raw_content)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             ).bind(
                 id,
