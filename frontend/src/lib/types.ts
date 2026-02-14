@@ -28,9 +28,17 @@ export interface NewsItem {
     translated_content?: string
 }
 
+export interface SummaryItem {
+    session: 'morning' | 'evening'
+    content: string
+    created_at: string
+}
+
 export interface DailySummaryResponse {
     date: string
-    summary: string
+    session?: string
+    summary?: string
+    summaries?: SummaryItem[]
 }
 
 export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ World'

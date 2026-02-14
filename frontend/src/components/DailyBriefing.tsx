@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Copy, Check, Sun, Moon } from 'lucide-react'
 import Markdown from 'react-markdown'
 import { todayStr, formatDateCN } from '@/lib/utils'
 import { fetchDailySummary } from '@/lib/api'
+import type { SummaryItem } from '@/lib/types'
+
+type Session = 'morning' | 'evening'
 
 export function DailyBriefing() {
     const [selectedDate, setSelectedDate] = useState(todayStr())
-    const [content, setContent] = useState<string | null>(null)
+    const [summaries, setSummaries] = useState<SummaryItem[]>([])
+    const [activeSession, setActiveSession] = useState<Session>(() => {
+        // Default: show morning before 14:00 BJT, evening after
+        const hour = new Date().getHours()
+        return hour < 14 ? 'morning' : 'evening'
+    })
     const [loading, setLoading] = useState(true)
     const [calendarOpen, setCalendarOpen] = useState(false)
     const [calendarViewDate, setCalendarViewDate] = useState(new Date())
@@ -14,29 +22,50 @@ export function DailyBriefing() {
     const popoverRef = useRef<HTMLDivElement>(null)
     const triggerRef = useRef<HTMLButtonElement>(null)
 
+    const activeContent = summaries.find(s => s.session === activeSession)?.content || null
+    const hasMorning = summaries.some(s => s.session === 'morning')
+    const hasEvening = summaries.some(s => s.session === 'evening')
+
     const copyBriefing = useCallback(() => {
-        if (!content) return
-        navigator.clipboard.writeText(content).then(() => {
+        if (!activeContent) return
+        navigator.clipboard.writeText(activeContent).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
         })
-    }, [content])
+    }, [activeContent])
 
-    const loadSummary = useCallback(async (date: string) => {
+    const loadSummaries = useCallback(async (date: string) => {
         setLoading(true)
         try {
             const json = await fetchDailySummary(date)
-            setContent(json.summary && !json.summary.includes('没有') ? json.summary : null)
+            if (json.summaries && json.summaries.length > 0) {
+                setSummaries(json.summaries)
+            } else if (json.summary && !json.summary.includes('No summary')) {
+                // Backward compat: single summary response
+                setSummaries([{ session: 'morning', content: json.summary, created_at: '' }])
+            } else {
+                setSummaries([])
+            }
         } catch {
-            setContent(null)
+            setSummaries([])
         } finally {
             setLoading(false)
         }
     }, [])
 
     useEffect(() => {
-        loadSummary(selectedDate)
-    }, [selectedDate, loadSummary])
+        loadSummaries(selectedDate)
+    }, [selectedDate, loadSummaries])
+
+    // Auto-select first available tab when data loads
+    useEffect(() => {
+        if (summaries.length > 0) {
+            const hasActive = summaries.some(s => s.session === activeSession)
+            if (!hasActive) {
+                setActiveSession(summaries[0].session)
+            }
+        }
+    }, [summaries]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Close calendar on outside click
     useEffect(() => {
@@ -101,19 +130,52 @@ export function DailyBriefing() {
 
             {/* Briefing Card */}
             <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden shadow-2xl shadow-black/20">
-                {/* Copy button */}
-                {content && !loading && (
-                    <div className="flex justify-end px-6 pt-4 pb-0 lg:px-8">
+                {/* Session Tabs */}
+                {!loading && summaries.length > 0 && (
+                    <div className="flex items-center border-b border-border-subtle">
                         <button
-                            onClick={copyBriefing}
-                            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors px-2.5 py-1 rounded-lg hover:bg-surface-hover"
+                            onClick={() => setActiveSession('morning')}
+                            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeSession === 'morning'
+                                    ? 'border-amber-400 text-amber-300 bg-amber-500/5'
+                                    : hasMorning
+                                        ? 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-surface-hover'
+                                        : 'border-transparent text-slate-600 cursor-not-allowed'
+                                }`}
+                            disabled={!hasMorning}
                         >
-                            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                            {copied ? '已复制' : '复制 MD'}
+                            <Sun className="w-4 h-4" />
+                            <span>晨报</span>
+                            {!hasMorning && <span className="text-[10px] text-slate-600 ml-1">—</span>}
                         </button>
+                        <button
+                            onClick={() => setActiveSession('evening')}
+                            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeSession === 'evening'
+                                    ? 'border-indigo-400 text-indigo-300 bg-indigo-500/5'
+                                    : hasEvening
+                                        ? 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-surface-hover'
+                                        : 'border-transparent text-slate-600 cursor-not-allowed'
+                                }`}
+                            disabled={!hasEvening}
+                        >
+                            <Moon className="w-4 h-4" />
+                            <span>晚报</span>
+                            {!hasEvening && <span className="text-[10px] text-slate-600 ml-1">—</span>}
+                        </button>
+                        <div className="flex-1" />
+                        {/* Copy button */}
+                        {activeContent && (
+                            <button
+                                onClick={copyBriefing}
+                                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors px-3 py-1 mr-3 rounded-lg hover:bg-surface-hover"
+                            >
+                                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copied ? '已复制' : '复制 MD'}
+                            </button>
+                        )}
                     </div>
                 )}
-                <div className={`p-6 lg:p-8 ${content && !loading ? 'pt-2 lg:pt-2' : ''} prose-finance custom-scroll max-h-[calc(100vh-180px)] overflow-y-auto`}>
+
+                <div className="p-6 lg:p-8 prose-finance custom-scroll max-h-[calc(100vh-220px)] overflow-y-auto">
                     {loading ? (
                         <div className="space-y-4">
                             <div className="skeleton h-8 w-3/4" />
@@ -124,14 +186,14 @@ export function DailyBriefing() {
                             <div className="skeleton h-4 w-full" />
                             <div className="skeleton h-4 w-3/4" />
                         </div>
-                    ) : content ? (
-                        <Markdown>{content}</Markdown>
+                    ) : activeContent ? (
+                        <Markdown>{activeContent}</Markdown>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                             <div className="text-5xl mb-4">📭</div>
                             <h3 className="text-lg font-semibold text-slate-300 mb-2">暂无简报</h3>
                             <p className="text-sm text-slate-500 max-w-xs">
-                                {selectedDate} 的市场简报尚未生成，请稍后再来查看。
+                                {selectedDate} 的{activeSession === 'morning' ? '晨报' : '晚报'}尚未生成，请稍后再来查看。
                             </p>
                         </div>
                     )}
