@@ -27,8 +27,19 @@ app.get('/api/news', async (c) => {
 app.get('/api/daily-summary', async (c) => {
     const db = new DBService(c.env.DB);
     const date = c.req.query('date') || new Date().toISOString().split('T')[0];
-    const summary = await db.getDailySummary(date);
-    return c.json({ date, summary: summary || 'No summary available for this date.' });
+    const session = c.req.query('session'); // 'morning' | 'evening' | undefined
+
+    if (session) {
+        const summary = await db.getDailySummary(date, session);
+        return c.json({ date, session, summary: summary || 'No summary available.' });
+    }
+
+    // Return all summaries for the date
+    const summaries = await db.getDailySummaries(date);
+    if (summaries.length === 0) {
+        return c.json({ date, summaries: [], summary: 'No summary available for this date.' });
+    }
+    return c.json({ date, summaries });
 });
 
 app.get('/api/market-data', async (c) => {
@@ -51,14 +62,15 @@ app.get('/trigger-fetch', async (c) => {
 app.get('/trigger-summary', async (c) => {
     const db = new DBService(c.env.DB);
     const ai = new AliyunService(c.env);
+    const session = (c.req.query('session') as 'morning' | 'evening') || 'morning';
 
-    // Manually trigger daily briefing
-    await generateDailyBriefing(db, ai);
+    // Manually trigger daily briefing for specified session
+    await generateDailyBriefing(db, ai, session);
 
     // Also runs translation
     await generateTranslations(db, ai);
 
-    return c.text('Daily Briefing (and Translation) generation triggered');
+    return c.text(`${session === 'morning' ? '晨报' : '晚报'} generation triggered`);
 });
 
 app.get('/trigger-translation', async (c) => {
@@ -97,10 +109,15 @@ export default {
                     fetchMarketData(db, market),
                 ])
             );
-        } else if (event.cron === '30 21 * * *') {
-            // 21:30 UTC: Fetch latest market data, then generate daily briefing
+        } else if (event.cron === '0 0 * * *') {
+            // UTC 00:00 (BJT 08:00): Morning briefing — covers US/EU close
             ctx.waitUntil(
-                fetchMarketData(db, market).then(() => generateDailyBriefing(db, ai))
+                fetchMarketData(db, market).then(() => generateDailyBriefing(db, ai, 'morning'))
+            );
+        } else if (event.cron === '0 12 * * *') {
+            // UTC 12:00 (BJT 20:00): Evening briefing — covers Asia close
+            ctx.waitUntil(
+                fetchMarketData(db, market).then(() => generateDailyBriefing(db, ai, 'evening'))
             );
         } else {
             console.log('Unknown cron trigger, running default fetch + translate');
@@ -167,17 +184,18 @@ async function fetchMarketData(db: DBService, market: MarketDataService) {
     }
 }
 
-async function generateDailyBriefing(db: DBService, ai: AliyunService) {
+async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 'morning' | 'evening' = 'morning') {
     const today = new Date().toISOString().split('T')[0];
-    console.log(`Checking daily briefing for ${today}...`);
+    const sessionLabel = session === 'morning' ? '晨报' : '晚报';
+    console.log(`Checking ${sessionLabel} for ${today}...`);
 
-    const existing = await db.getDailySummary(today);
+    const existing = await db.getDailySummary(today, session);
     if (existing) {
-        console.log('Daily briefing already exists. Skipping.');
+        console.log(`${sessionLabel} already exists for ${today}. Skipping.`);
         return;
     }
 
-    console.log('Generating daily briefing...');
+    console.log(`Generating ${sessionLabel}...`);
     const todayNews = await db.getNewsByDate(today);
     console.log(`Found ${todayNews.length} news items for ${today}`);
 
@@ -190,15 +208,15 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService) {
     const marketData = await db.getLatestMarketData();
     console.log(`Found ${marketData.length} market data items for report.`);
 
-    const report = await ai.generateMarketReport(todayNews, marketData);
+    const report = await ai.generateMarketReport(todayNews, marketData, session);
 
     if (report) {
         // Format: 2026-02-13 → 2026年02月13日
         const [y, m, d] = today.split('-');
-        const title = `# VestLab 财经新闻综述（${y}年${m}月${d}日）`;
+        const title = `# VestLab 财经新闻${sessionLabel}（${y}年${m}月${d}日）`;
         const fullReport = `${title}\n\n${report}`;
-        await db.saveDailySummary(today, fullReport);
-        console.log('Daily briefing saved.');
+        await db.saveDailySummary(today, session, fullReport);
+        console.log(`${sessionLabel} saved for ${today}.`);
     }
 }
 

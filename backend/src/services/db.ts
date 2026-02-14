@@ -95,17 +95,31 @@ export class DBService {
         return results;
     }
 
-    async getDailySummary(date: string): Promise<string | null> {
+    async getDailySummary(date: string, session?: string): Promise<string | null> {
+        if (session) {
+            const result = await this.db.prepare(
+                'SELECT content FROM daily_summaries WHERE date = ? AND session = ?'
+            ).bind(date, session).first<{ content: string }>();
+            return result ? result.content : null;
+        }
+        // Fallback: return latest session for that date
         const result = await this.db.prepare(
-            'SELECT content FROM daily_summaries WHERE date = ?'
+            'SELECT content FROM daily_summaries WHERE date = ? ORDER BY created_at DESC LIMIT 1'
         ).bind(date).first<{ content: string }>();
         return result ? result.content : null;
     }
 
-    async saveDailySummary(date: string, content: string): Promise<void> {
+    async getDailySummaries(date: string): Promise<{ session: string; content: string; created_at: string }[]> {
+        const { results } = await this.db.prepare(
+            'SELECT session, content, created_at FROM daily_summaries WHERE date = ? ORDER BY session'
+        ).bind(date).all<{ session: string; content: string; created_at: string }>();
+        return results;
+    }
+
+    async saveDailySummary(date: string, session: string, content: string): Promise<void> {
         await this.db.prepare(
-            'INSERT OR REPLACE INTO daily_summaries (date, content) VALUES (?, ?)'
-        ).bind(date, content).run();
+            'INSERT OR REPLACE INTO daily_summaries (date, session, content) VALUES (?, ?, ?)'
+        ).bind(date, session, content).run();
     }
 
     // --- Market Data Methods ---

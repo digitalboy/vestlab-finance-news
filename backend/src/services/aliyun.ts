@@ -174,7 +174,7 @@ export class AliyunService {
         return block;
     }
 
-    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = []): Promise<string | null> {
+    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = [], session: 'morning' | 'evening' = 'morning'): Promise<string | null> {
         if (!this.aliyunKey || newsItems.length === 0) return null;
 
         const utcDate = new Date().toISOString().split('T')[0];
@@ -184,7 +184,28 @@ export class AliyunService {
 
         const marketDataBlock = this.formatMarketDataForPrompt(marketData);
 
-        const prompt = `你是 VestLab 的新闻分析工程师 David。今天的日期是 ${utcDate}（UTC）。请基于以下市场数据和新闻，撰写一份面向中国投资者的 **每日全球市场简报**。
+        const sessionLabel = session === 'morning' ? '晨报' : '晚报';
+        const sessionEmoji = session === 'morning' ? '🌅' : '🌆';
+
+        const sessionGuidance = session === 'morning'
+            ? `本期为 **晨报**（北京时间 08:00 发布），重点覆盖：
+- 隔夜美股完整交易日表现（三大指数、板块轮动、个股异动）
+- 欧洲市场收盘情况
+- 隔夜重大事件（美联储、经济数据、地缘政治等）
+- 对今日亚太市场（A股、港股、日股）的开盘影响展望
+- 美债收益率、美元指数、黄金原油等避险/风险资产的隔夜走势`
+            : `本期为 **晚报**（北京时间 20:00 发布），重点覆盖：
+- 今日亚太市场收盘总结（A股三大指数、港股恒指/科技指数、日经等）
+- 今日亚太市场热点板块和重要个股
+- 欧洲早盘动态（截至发稿时的走势）
+- 美股盘前期货情绪和关键预期
+- 今日国内政策、经济数据对市场的影响
+- 人民币汇率、北向资金、南向资金等跨境资金流向`;
+
+        const prompt = `你是 VestLab 的新闻分析工程师 David。今天的日期是 ${utcDate}（UTC）。请基于以下市场数据和新闻，撰写一份面向中国投资者的 **每日全球市场${sessionLabel}**。
+
+${sessionEmoji} **${sessionLabel}定位**：
+${sessionGuidance}
 
 新闻源涵盖四个维度：
 - **WSJ Markets**：美股、债券、大宗商品、投资趋势
@@ -195,7 +216,7 @@ ${marketDataBlock}
 **报告结构**（使用 Markdown 格式）：
 
 ## 📊 市场脉搏
-用 2-3 句话概括今日全球市场整体情绪和核心主线。引用上方的真实指数数据。
+用 2-3 句话概括${session === 'morning' ? '隔夜' : '今日'}全球市场整体情绪和核心主线。引用上方的真实指数数据。
 
 ## 🔥 焦点事件
 挑选 3-5 条最重要的新闻深度解读，每条包含：
@@ -204,13 +225,13 @@ ${marketDataBlock}
 - 对中国投资者的启示
 
 ## 📈 资产联动
-引用上方的真实指数和商品数据，简述各大类资产表现联动：美股（分板块）、美债、美元、黄金、原油、加密货币等。
+引用上方的真实指数和商品数据，简述各大类资产表现联动：${session === 'morning' ? '美股（分板块）、美债、美元、黄金、原油、加密货币等' : 'A股（分板块）、港股、日股、人民币、黄金、原油等'}。
 
 ## 🌍 地缘与政策
 梳理可能影响市场的地缘政治动态和重要政策变化。
 
-## 🔮 明日关注
-列出明日或短期需要关注的事件/数据节点。
+## 🔮 ${session === 'morning' ? '今日关注' : '明日关注'}
+列出${session === 'morning' ? '今日亚太交易日' : '明日或短期'}需要关注的事件/数据节点。
 
 **要求**：
 - 字数：800-1200字
@@ -219,7 +240,7 @@ ${marketDataBlock}
 - 站在全球视角，但突出对中国投资者的相关性
 - 对于涉及中国的新闻（如中国汽车、贸易关系等），要特别深入分析
 - **必须准确引用上方提供的市场数据，不要编造任何数字**
-- 报告末尾署名：VestLab 新闻分析工程师 David，并注明日期 ${utcDate}
+- 报告末尾署名：VestLab 新闻分析工程师 David，并注明日期 ${utcDate}（${sessionLabel}）
 
 **今日新闻列表**（共 ${newsItems.length} 条）：
 ${newsContext}
