@@ -135,7 +135,9 @@ async function fetchNews(db: DBService, rss: RSSService) {
         { name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
         { name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
         { name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
-        { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' }
+        { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
+        { name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
+        { name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
     ];
 
     for (const source of sources) {
