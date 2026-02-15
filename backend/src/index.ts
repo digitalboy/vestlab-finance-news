@@ -62,8 +62,11 @@ app.get('/api/market-data', async (c) => {
 app.get('/trigger-fetch', async (c) => {
     const db = new DBService(c.env.DB);
     const rss = new RSSService();
-    await fetchNews(db, rss);
-    return c.text('Fetch triggered');
+    // Manual trigger: fetch all batches
+    for (let i = 0; i < 4; i++) {
+        await fetchNews(db, rss, i);
+    }
+    return c.text('Fetch triggered for all batches');
 });
 
 app.get('/trigger-summary', async (c) => {
@@ -107,17 +110,17 @@ export default {
 
         console.log(`Cron triggered: ${event.cron}`);
 
-        if (event.cron === '*/10 * * * *') {
-            // Fetch news, then translate any untranslated items
-            // Also fetch market data on each cycle
-            // OPTIMIZATION: Split RSS fetching to stay within CPU limits
-            // 10-min interval: 00(A), 10(B), 20(A), 30(B), 40(A), 50(B)
+        if (event.cron === '*/5 * * * *') {
+            // Fetch News: Spread across 4 batches (20 min cycle)
+            // 5-min interval: 0, 5, 10, 15, 20...
+            // Minute % 20 -> 0, 5, 10, 15
+            // Batch Index -> 0, 1, 2, 3
             const minute = new Date(event.scheduledTime).getUTCMinutes();
-            const group = (minute % 20 < 10) ? 'A' : 'B';
+            const batchIndex = Math.floor((minute % 20) / 5);
 
             ctx.waitUntil(
                 Promise.all([
-                    fetchNews(db, rss, group).then(() => generateTranslations(db, ai)),
+                    fetchNews(db, rss, batchIndex).then(() => generateTranslations(db, ai)),
                     fetchMarketData(db, market),
                 ])
             );
@@ -134,7 +137,7 @@ export default {
         } else {
             console.log('Unknown cron trigger, running default fetch + translate');
             ctx.waitUntil(
-                fetchNews(db, rss).then(() => generateTranslations(db, ai))
+                fetchNews(db, rss, 0).then(() => generateTranslations(db, ai))
             );
         }
     }
@@ -142,29 +145,35 @@ export default {
 
 // --- Helper Functions ---
 
-async function fetchNews(db: DBService, rss: RSSService, group: 'A' | 'B' | 'all' = 'all') {
+async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
     const allSources = [
         // Group A: Markets & Business (High Priority)
-        { group: 'A', name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
-        { group: 'A', name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
-        { group: 'A', name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
-        { group: 'A', name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
-        { group: 'A', name: 'France 24 Business', url: 'https://www.france24.com/en/business-tech/rss' },
-        { group: 'A', name: 'BBC Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml?edition=uk' },
-        { group: 'A', name: 'The Economist', url: 'https://www.economist.com/business/rss.xml' },
+        { name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
+        { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
+        { name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
+        { name: 'BBC Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml?edition=uk' },
+        { name: 'The Economist', url: 'https://www.economist.com/business/rss.xml' },
+        { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
+        { name: 'France 24 Business', url: 'https://www.france24.com/en/business-tech/rss' },
 
         // Group B: Economy & World (Macro)
-        { group: 'B', name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
-        { group: 'B', name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
-        { group: 'B', name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
-        { group: 'B', name: 'France 24 World', url: 'https://www.france24.com/en/rss' },
+        { name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
+        { name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
+        { name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+        { name: 'France 24 World', url: 'https://www.france24.com/en/rss' },
     ];
 
-    const sources = group === 'all'
-        ? allSources
-        : allSources.filter(s => s.group === group);
+    // Batch size = 3. Total 11 sources.
+    // Batch 0: 0, 1, 2
+    // Batch 1: 3, 4, 5
+    // Batch 2: 6, 7, 8
+    // Batch 3: 9, 10
+    const BATCH_SIZE = 3;
+    const start = batchIndex * BATCH_SIZE;
+    const end = start + BATCH_SIZE;
+    const sources = allSources.slice(start, end);
 
-    console.log(`[RSS] Fetching group ${group} (${sources.length} sources)...`);
+    console.log(`[RSS] Fetching Batch ${batchIndex} (${sources.length} sources)...`);
 
     for (const source of sources) {
         try {
