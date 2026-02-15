@@ -12,6 +12,10 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     'NYT Business': { color: 'bg-emerald-700', label: 'NYT Biz' },
     'NYT World': { color: 'bg-teal-700', label: 'NYT World' },
     'TechCrunch': { color: 'bg-[#00a562] text-white', label: 'TechCrunch' },
+    'France 24 Business': { color: 'bg-[#003d7e] text-white', label: 'France 24 Biz' },
+    'France 24 World': { color: 'bg-[#005eb8] text-white', label: 'France 24' },
+    'BBC Business': { color: 'bg-[#bb1919] text-white', label: 'BBC Biz' },
+    'The Economist': { color: 'bg-[#e3120b] text-white', label: 'Economist' },
 }
 
 function getSourceConfig(source: string): SourceConfig {
@@ -76,6 +80,10 @@ export function NewsFeed() {
                     <option value="NYT Business">NYT Business</option>
                     <option value="NYT World">NYT World</option>
                     <option value="TechCrunch">TechCrunch</option>
+                    <option value="France 24 Business">France 24 Business</option>
+                    <option value="France 24 World">France 24 World</option>
+                    <option value="BBC Business">BBC Business</option>
+                    <option value="The Economist">The Economist</option>
                 </select>
             </div>
 

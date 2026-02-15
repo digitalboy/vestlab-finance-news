@@ -149,11 +149,15 @@ async function fetchNews(db: DBService, rss: RSSService, group: 'A' | 'B' | 'all
         { group: 'A', name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
         { group: 'A', name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
         { group: 'A', name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
+        { group: 'A', name: 'France 24 Business', url: 'https://www.france24.com/en/business-tech/rss' },
+        { group: 'A', name: 'BBC Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml?edition=uk' },
+        { group: 'A', name: 'The Economist', url: 'https://www.economist.com/business/rss.xml' },
 
         // Group B: Economy & World (Macro)
         { group: 'B', name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
         { group: 'B', name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
         { group: 'B', name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+        { group: 'B', name: 'France 24 World', url: 'https://www.france24.com/en/rss' },
     ];
 
     const sources = group === 'all'

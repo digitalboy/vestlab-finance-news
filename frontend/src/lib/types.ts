@@ -41,7 +41,7 @@ export interface DailySummaryResponse {
     summaries?: SummaryItem[]
 }
 
-export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ World' | 'NYT Business' | 'NYT World' | 'TechCrunch'
+export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ World' | 'NYT Business' | 'NYT World' | 'TechCrunch' | 'France 24 Business' | 'France 24 World' | 'BBC Business' | 'The Economist'
 
 export interface SourceConfig {
     color: string
