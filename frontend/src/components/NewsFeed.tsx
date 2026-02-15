@@ -24,27 +24,33 @@ export function NewsFeed() {
     const [source, setSource] = useState('all')
     const [search, setSearch] = useState('')
 
+    const [debouncedSearch, setDebouncedSearch] = useState('')
+
+    // Debounce search input
     useEffect(() => {
-        fetchNews(80)
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [search])
+
+    // Fetch news when query changes
+    useEffect(() => {
+        setLoading(true)
+        fetchNews(80, debouncedSearch)
             .then(setAllNews)
             .catch(() => setAllNews([]))
             .finally(() => setLoading(false))
-    }, [])
+    }, [debouncedSearch])
 
     const filtered = useMemo(() => {
         let list = allNews
         if (source !== 'all') {
             list = list.filter(n => n.source === source)
         }
-        if (search) {
-            const q = search.toLowerCase()
-            list = list.filter(n =>
-                (n.translated_title || '').toLowerCase().includes(q) ||
-                (n.title || '').toLowerCase().includes(q)
-            )
-        }
+        // Client-side search filtering removed in favor of server-side
         return list
-    }, [allNews, source, search])
+    }, [allNews, source])
 
     return (
         <section className="lg:w-[40%] flex flex-col gap-4">

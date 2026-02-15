@@ -95,6 +95,26 @@ export class DBService {
         return results;
     }
 
+    async searchNews(keyword: string, limit: number = 50): Promise<any[]> {
+        const searchTerm = `%${keyword}%`;
+        const query = `
+            SELECT n.*, t.title as translated_title, t.content as translated_content
+            FROM news n
+            LEFT JOIN translations t ON n.id = t.news_id AND t.language = 'zh'
+            WHERE 
+                n.title LIKE ? OR 
+                n.description LIKE ? OR 
+                t.title LIKE ? OR 
+                t.content LIKE ?
+            ORDER BY n.published_at DESC
+            LIMIT ?
+        `;
+        const { results } = await this.db.prepare(query)
+            .bind(searchTerm, searchTerm, searchTerm, searchTerm, limit)
+            .all();
+        return results;
+    }
+
     async getDailySummary(date: string, session?: string): Promise<string | null> {
         if (session) {
             const result = await this.db.prepare(

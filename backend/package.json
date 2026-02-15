@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "cross-env HTTP_PROXY=http://127.0.0.1:7890 HTTPS_PROXY=http://127.0.0.1:7890 wrangler deploy"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260212.0",
+    "cross-env": "^10.1.0",
     "fast-xml-parser": "^5.3.5",
     "typescript": "^5.9.3",
     "wrangler": "^4.65.0"

@@ -20,6 +20,13 @@ app.use('/*', cors({
 app.get('/api/news', async (c) => {
     const db = new DBService(c.env.DB);
     const limit = Number(c.req.query('limit')) || 50;
+    const query = c.req.query('q');
+
+    if (query && query.trim().length > 0) {
+        const news = await db.searchNews(query.trim(), limit);
+        return c.json(news);
+    }
+
     const news = await db.getLatestNews(limit);
     return c.json(news);
 });

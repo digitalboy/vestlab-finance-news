@@ -17,8 +17,12 @@ export async function fetchDailySummary(date?: string): Promise<DailySummaryResp
     return res.json()
 }
 
-export async function fetchNews(limit = 80): Promise<NewsItem[]> {
-    const res = await fetch(`${API_BASE}/api/news?limit=${limit}`)
+export async function fetchNews(limit = 80, query?: string): Promise<NewsItem[]> {
+    const params = new URLSearchParams()
+    if (limit) params.set('limit', limit.toString())
+    if (query) params.set('q', query)
+
+    const res = await fetch(`${API_BASE}/api/news?${params.toString()}`)
     if (!res.ok) throw new Error(`News fetch failed: ${res.status}`)
     return res.json()
 }
