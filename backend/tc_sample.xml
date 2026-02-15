@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>TechCrunch</title>
+	<atom:link href="https://techcrunch.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://techcrunch.com/</link>
+	<description>Startup and Technology News</description>
+	<lastBuildDate>Sun, 15 Feb 2026 00:02:55 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.1</generator>
+
+<image>
+	<url>https://techcrunch.com/wp-content/uploads/2015/02/cropped-cropped-favicon-gradient.png?w=32</url>
+	<title>TechCrunch</title>
+	<link>https://techcrunch.com/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>Homeland Security reportedly sent hundreds of subpoenas seeking to unmask anti-ICE accounts</title>
+		<link>https://techcrunch.com/2026/02/14/homeland-security-reportedly-sent-hundreds-of-subpoenas-seeking-to-unmask-anti-ice-accounts/</link>
+		
+		<dc:creator><![CDATA[Anthony Ha]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 22:30:00 +0000</pubDate>
+				<category><![CDATA[Security]]></category>
+		<category><![CDATA[Government & Policy]]></category>
+		<category><![CDATA[Google]]></category>
+		<category><![CDATA[Department of Homeland Security]]></category>
+		<category><![CDATA[discord]]></category>
+		<category><![CDATA[Immigration and Customs Enforcement]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093205</guid>
+
+					<description><![CDATA[The Department of Homeland Security has been increasing pressure on tech companies to identify the owners of accounts that criticize ICE.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Is safety ‘dead’ at xAI?</title>
+		<link>https://techcrunch.com/2026/02/14/is-safety-is-dead-at-xai/</link>
+		
+		<dc:creator><![CDATA[Anthony Ha]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 21:55:44 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Elon Musk]]></category>
+		<category><![CDATA[xAI]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093200</guid>
+
+					<description><![CDATA[Elon Musk is “actively” working to make xAI’s Grok chatbot “more unhinged, according to a former employee.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>In a changed VC landscape, this exec is doubling down on overlooked founders</title>
+		<link>https://techcrunch.com/2026/02/14/stacy-brown-philpot-cherryrock-capital-vc/</link>
+		
+		<dc:creator><![CDATA[Connie Loizos]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 20:37:42 +0000</pubDate>
+				<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092452</guid>
+
+					<description><![CDATA[As much of Silicon Valley chases mega-rounds and buzzy AI deals, Stacy Brown-Philpot is running Cherryrock Capital like a throwback to venture capital's earlier days]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>&#8216;Clueless&#8217; -inspired app Alta partners with brand Public School to start integrating styling tools into websites</title>
+		<link>https://techcrunch.com/2026/02/14/clueless-inspired-app-alta-partners-with-brand-public-school-to-start-integrating-styling-tools-into-websites/</link>
+		
+		<dc:creator><![CDATA[Dominic-Madori Davis]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 19:00:00 +0000</pubDate>
+				<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Fashion]]></category>
+		<category><![CDATA[fashion week]]></category>
+		<category><![CDATA[consumer]]></category>
+		<category><![CDATA[alta]]></category>
+		<category><![CDATA[NYFW]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092988</guid>
+
+					<description><![CDATA[ This week, Alta unveiled its first integration collaboration, teaming up with Public School, a storied New York City brand. 
+
+]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Hollywood isn&#8217;t happy about the new Seedance 2.0 video generator</title>
+		<link>https://techcrunch.com/2026/02/14/hollywood-isnt-happy-about-the-new-seedance-2-0-video-generator/</link>
+		
+		<dc:creator><![CDATA[Anthony Ha]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 18:26:52 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Media & Entertainment]]></category>
+		<category><![CDATA[bytedance]]></category>
+		<category><![CDATA[Disney]]></category>
+		<category><![CDATA[motion picture association]]></category>
+		<category><![CDATA[seedance]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093184</guid>
+
+					<description><![CDATA[Hollywood organizations are pushing back against a new AI video model called Seedance 2.0, which they say has quickly become a tool for “blatant” copyright infringement.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Designer Kate Barton teams up with IBM and Fiducia AI for a NYFW presentation</title>
+		<link>https://techcrunch.com/2026/02/14/designer-kate-barton-teams-up-with-ibm-and-fiducia-ai-for-a-nyfw-presentation/</link>
+		
+		<dc:creator><![CDATA[Dominic-Madori Davis]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 17:43:46 +0000</pubDate>
+				<category><![CDATA[Media & Entertainment]]></category>
+		<category><![CDATA[AI]]></category>
+		<category><![CDATA[Fashion]]></category>
+		<category><![CDATA[NYFW]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093023</guid>
+
+					<description><![CDATA[Designer Kate Barton teams up with Fiducia AI and IBM for a NYFW presentation. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>India doubles down on state-backed venture capital, approving $1.1B fund</title>
+		<link>https://techcrunch.com/2026/02/14/india-doubles-down-on-state-backed-venture-capital-approving-1-1b-fund/</link>
+		
+		<dc:creator><![CDATA[Jagmeet Singh]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 16:23:22 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[deep tech]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093154</guid>
+
+					<description><![CDATA[India’s $1.1B fund-of-funds will invest through private VCs to support deep-tech and manufacturing startups.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Nothing opens its first retail store in India</title>
+		<link>https://techcrunch.com/2026/02/13/nothing-opens-its-first-retail-store-in-india/</link>
+		
+		<dc:creator><![CDATA[Ivan Mehta]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 06:30:00 +0000</pubDate>
+				<category><![CDATA[Gadgets]]></category>
+		<category><![CDATA[Hardware]]></category>
+		<category><![CDATA[Carl Pei]]></category>
+		<category><![CDATA[hardware]]></category>
+		<category><![CDATA[India]]></category>
+		<category><![CDATA[nothing]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092800</guid>
+
+					<description><![CDATA[The two-story location will sell products from Nothing and the more affordable, mass-market brand CMF.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Indian pharmacy chain giant exposed customer data and internal systems</title>
+		<link>https://techcrunch.com/2026/02/13/indias-major-pharmacy-chain-exposed-customer-data-and-internal-systems/</link>
+		
+		<dc:creator><![CDATA[Jagmeet Singh]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 03:30:00 +0000</pubDate>
+				<category><![CDATA[Security]]></category>
+		<category><![CDATA[Exclusive]]></category>
+		<category><![CDATA[cybersecurity]]></category>
+		<category><![CDATA[data exposure]]></category>
+		<category><![CDATA[DavaIndia]]></category>
+		<category><![CDATA[Zota Healthcare]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092377</guid>
+
+					<description><![CDATA[A backend flaw in web admin dashboards used by one of India's largest pharmacy chains, exposed thousands of online pharmacy orders.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Airbnb plans to bake in AI features for search, discovery and support</title>
+		<link>https://techcrunch.com/2026/02/13/airbnb-plans-to-bake-in-ai-features-for-search-discovery-and-support/</link>
+		
+		<dc:creator><![CDATA[Ivan Mehta]]></dc:creator>
+		<pubDate>Sat, 14 Feb 2026 02:40:42 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Apps]]></category>
+		<category><![CDATA[Airbnb]]></category>
+		<category><![CDATA[travel apps]]></category>
+		<category><![CDATA[AI search]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092776</guid>
+
+					<description><![CDATA[Airbnb CEO Brian Chesky said the company wants to increase its use of large language models for customer discovery, support and engineering. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Airbnb says a third of its customer support is now handled by AI in the US and Canada</title>
+		<link>https://techcrunch.com/2026/02/13/airbnb-says-a-third-of-its-customer-support-is-now-handled-by-ai-in-the-u-s-and-canada/</link>
+		
+		<dc:creator><![CDATA[Sarah Perez]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 22:12:26 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Apps]]></category>
+		<category><![CDATA[Commerce]]></category>
+		<category><![CDATA[ai agent]]></category>
+		<category><![CDATA[airnb]]></category>
+		<category><![CDATA[commerce]]></category>
+		<category><![CDATA[marketplace]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093066</guid>
+
+					<description><![CDATA[Airbnb was poised to introduce an app that doesn't just search for you, but one that "knows you." CEO Brian Chesky said, "It will help guests plan their entire trip, help hosts better run their businesses, and help the company operate more efficiently at scale."]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Fintech lending giant Figure confirms data breach</title>
+		<link>https://techcrunch.com/2026/02/13/fintech-lending-giant-figure-confirms-data-breach/</link>
+		
+		<dc:creator><![CDATA[Lorenzo Franceschi-Bicchierai]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 21:02:46 +0000</pubDate>
+				<category><![CDATA[Fintech]]></category>
+		<category><![CDATA[Security]]></category>
+		<category><![CDATA[cybercrime]]></category>
+		<category><![CDATA[cybersecurity]]></category>
+		<category><![CDATA[Figure Technology]]></category>
+		<category><![CDATA[hackers]]></category>
+		<category><![CDATA[hacking]]></category>
+		<category><![CDATA[In Brief]]></category>
+		<category><![CDATA[infosec]]></category>
+		<category><![CDATA[shinyhunters]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093037</guid>
+
+					<description><![CDATA[The company said hackers downloaded “a limited number of files” after breaking into an employee’s account. The hacking group ShinyHunters took responsibility for the breach. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Why top talent is walking away from OpenAI and xAI</title>
+		<link>https://techcrunch.com/video/why-top-talent-is-walking-away-from-openai-and-xai/</link>
+		
+		<dc:creator><![CDATA[Theresa Loconsolo]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 21:00:00 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Equity]]></category>
+		<category><![CDATA[fusion startup]]></category>
+		<category><![CDATA[humanoid robotics]]></category>
+		<category><![CDATA[OpenAI]]></category>
+		<category><![CDATA[Roundup]]></category>
+		<category><![CDATA[staff cuts]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?post_type=tc_video&#038;p=3092996</guid>
+
+					<description><![CDATA[AI companies have been hemorrhaging&#160;talent&#160;the past few weeks. Half of&#160;xAI’s&#160;founding team&#160;has left the company — some on their own, others through “restructuring” — while OpenAI is facing its own shakeups, from the&#160;disbanding of its&#160;mission alignment team&#160;to the firing of a policy exec who opposed its “adult mode” feature.&#160; Watch as TechCrunch’s Equity podcast hosts Kirsten Korosec, Anthony [&#8230;]]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Sex toys maker Tenga says hacker stole customer information</title>
+		<link>https://techcrunch.com/2026/02/13/sex-toys-maker-tenga-says-hacker-stole-customer-information/</link>
+		
+		<dc:creator><![CDATA[Lorenzo Franceschi-Bicchierai]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 20:19:05 +0000</pubDate>
+				<category><![CDATA[Security]]></category>
+		<category><![CDATA[cybercrime]]></category>
+		<category><![CDATA[cybersecurity]]></category>
+		<category><![CDATA[data breach]]></category>
+		<category><![CDATA[hackers]]></category>
+		<category><![CDATA[hacking]]></category>
+		<category><![CDATA[infosec]]></category>
+		<category><![CDATA[Japan]]></category>
+		<category><![CDATA[Sex]]></category>
+		<category><![CDATA[sex toys]]></category>
+		<category><![CDATA[tenga]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3093004</guid>
+
+					<description><![CDATA[The Japanese sex toy maker said a hacker broke into an employee's inbox and stole customer names, email addresses, and correspondence, including order details and customer service inquiries.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>OpenAI removes access to sycophancy-prone GPT-4o model</title>
+		<link>https://techcrunch.com/2026/02/13/openai-removes-access-to-sycophancy-prone-gpt-4o-model/</link>
+		
+		<dc:creator><![CDATA[Amanda Silberling]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 18:10:00 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[ChatGPT]]></category>
+		<category><![CDATA[gpt-4o]]></category>
+		<category><![CDATA[In Brief]]></category>
+		<category><![CDATA[OpenAI]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092840</guid>
+
+					<description><![CDATA[The model is known for its overly sycophantic nature and its role in several lawsuits involving users' unhealthy relationships with the chatbot.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>The SEC closed its investigation into Fisker</title>
+		<link>https://techcrunch.com/2026/02/13/the-sec-closed-its-investigation-into-fisker/</link>
+		
+		<dc:creator><![CDATA[Sean O'Kane]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 17:48:43 +0000</pubDate>
+				<category><![CDATA[Transportation]]></category>
+		<category><![CDATA[electric vehicles]]></category>
+		<category><![CDATA[EVs]]></category>
+		<category><![CDATA[Exclusive]]></category>
+		<category><![CDATA[Fisker]]></category>
+		<category><![CDATA[Henrik Fisker]]></category>
+		<category><![CDATA[SEC]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3091912</guid>
+
+					<description><![CDATA[The financial regulator revealed in a response to a TechCrunch records request that the probe was closed in September 2025.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>India partners with Alibaba.com for export push despite past China tech bans</title>
+		<link>https://techcrunch.com/2026/02/13/india-partners-with-alibaba-com-for-export-push-despite-past-china-tech-bans/</link>
+		
+		<dc:creator><![CDATA[Jagmeet Singh]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 17:32:59 +0000</pubDate>
+				<category><![CDATA[Commerce]]></category>
+		<category><![CDATA[Government & Policy]]></category>
+		<category><![CDATA[alibaba]]></category>
+		<category><![CDATA[alibaba.com]]></category>
+		<category><![CDATA[Exclusive]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092886</guid>
+
+					<description><![CDATA[India turns to Alibaba.com's B2B network of 50 million buyers in 200 countries to help businesses scale global exports.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Anthropic&#8217;s Super Bowl ads mocking AI with ads helped push Claude&#8217;s app into the top 10</title>
+		<link>https://techcrunch.com/2026/02/13/anthropics-super-bowl-ads-mocking-ai-with-ads-helped-push-claudes-app-into-the-top-10/</link>
+		
+		<dc:creator><![CDATA[Sarah Perez]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 17:16:27 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Apps]]></category>
+		<category><![CDATA[Anthropic]]></category>
+		<category><![CDATA[Claude]]></category>
+		<category><![CDATA[Super Bowl ads]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092849</guid>
+
+					<description><![CDATA[The numbers suggest that Anthropic's Super Bowl commercials, combined with Anthropic's recent release of its new Opus 4.6 model, worked to drive attention to Claude's app and its key differentiator from ChatGPT. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Roku to launch streaming bundles as part of its efforts to continue growing its profitability</title>
+		<link>https://techcrunch.com/2026/02/13/roku-to-launch-streaming-bundles-as-part-of-its-efforts-to-continue-growing-its-profitability/</link>
+		
+		<dc:creator><![CDATA[Lauren Forristal]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 16:39:27 +0000</pubDate>
+				<category><![CDATA[Media & Entertainment]]></category>
+		<category><![CDATA[roku]]></category>
+		<category><![CDATA[streaming]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092866</guid>
+
+					<description><![CDATA[Roku delivered an impressive Q4, posting net income of $80.5 million. The company also outlined plans for streaming bundles.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>A Stanford grad student created an algorithm to help his classmates find love; now, Date Drop is the basis of his new startup</title>
+		<link>https://techcrunch.com/2026/02/13/a-stanford-grad-student-created-an-algorithm-to-help-his-classmates-find-love-now-date-drop-is-the-basis-of-his-new-startup/</link>
+		
+		<dc:creator><![CDATA[Amanda Silberling]]></dc:creator>
+		<pubDate>Fri, 13 Feb 2026 16:24:53 +0000</pubDate>
+				<category><![CDATA[Apps]]></category>
+		<category><![CDATA[date drop]]></category>
+		<category><![CDATA[dating apps]]></category>
+		<category><![CDATA[henry weng]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3092489</guid>
+
+					<description><![CDATA["Our matches convert to actual dates at about 10x the rate of Tinder," Weng told TechCrunch.]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>

@@ -140,6 +140,7 @@ async function fetchNews(db: DBService, rss: RSSService, group: 'A' | 'B' | 'all
         // Group A: Markets & Business (High Priority)
         { group: 'A', name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
         { group: 'A', name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
+        { group: 'A', name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
         { group: 'A', name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
 
         // Group B: Economy & World (Macro)
