@@ -201,22 +201,37 @@ async function fetchMarketData(db: DBService, market: MarketDataService) {
 }
 
 async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 'morning' | 'evening' = 'morning') {
-    const today = new Date().toISOString().split('T')[0];
-    const sessionLabel = session === 'morning' ? '晨报' : '晚报';
-    console.log(`Checking ${sessionLabel} for ${today}...`);
+    const now = new Date();
+    // Beijing Time (UTC+8) for Report Date/ID
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const reportDate = beijingTime.toISOString().split('T')[0];
 
-    const existing = await db.getDailySummary(today, session);
+    // News Query Date (UTC)
+    // Morning (08:00 BJT = 00:00 UTC): Context is overnight (yesterday UTC)
+    // Evening (20:00 BJT = 12:00 UTC): Context is today (today UTC)
+    let newsDate = reportDate;
+    if (session === 'morning') {
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000); // approx yesterday
+        newsDate = yesterday.toISOString().split('T')[0];
+    } else {
+        newsDate = now.toISOString().split('T')[0];
+    }
+
+    const sessionLabel = session === 'morning' ? '晨报' : '晚报';
+    console.log(`Checking ${sessionLabel} for ${reportDate} (News Date: ${newsDate})...`);
+
+    const existing = await db.getDailySummary(reportDate, session);
     if (existing) {
-        console.log(`${sessionLabel} already exists for ${today}. Skipping.`);
+        console.log(`${sessionLabel} already exists for ${reportDate}. Skipping.`);
         return;
     }
 
     console.log(`Generating ${sessionLabel}...`);
-    const todayNews = await db.getNewsByDate(today);
-    console.log(`Found ${todayNews.length} news items for ${today}`);
+    const todayNews = await db.getNewsByDate(newsDate);
+    console.log(`Found ${todayNews.length} news items for ${newsDate}`);
 
     if (todayNews.length === 0) {
-        console.log('No news found for today. Skipping report.');
+        console.log(`No news found for ${newsDate}. Skipping report.`);
         return;
     }
 
@@ -228,11 +243,11 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
 
     if (report) {
         // Format: 2026-02-13 → 2026年02月13日
-        const [y, m, d] = today.split('-');
+        const [y, m, d] = reportDate.split('-');
         const title = `# VestLab 财经新闻${sessionLabel}（${y}年${m}月${d}日）`;
         const fullReport = `${title}\n\n${report}`;
-        await db.saveDailySummary(today, session, fullReport);
-        console.log(`${sessionLabel} saved for ${today}.`);
+        await db.saveDailySummary(reportDate, session, fullReport);
+        console.log(`${sessionLabel} saved for ${reportDate}.`);
     }
 }
 
