@@ -20,17 +20,30 @@ export function timeAgo(dateStr: string): string {
 }
 
 export function todayStr(): string {
-    return new Date().toISOString().split('T')[0]
+    // Return local date string YYYY-MM-DD
+    const d = new Date()
+    const offset = d.getTimezoneOffset() * 60000
+    const localDate = new Date(d.getTime() - offset)
+    return localDate.toISOString().split('T')[0]
 }
 
 export function formatDateCN(dateStr: string): string {
-    const d = new Date(dateStr + 'T00:00:00')
-    const month = d.getMonth() + 1
-    const day = d.getDate()
+    const d = new Date(dateStr) // Use local time parsing usually, or append T00:00:00 to force local?
+    // Actually dateStr is YYYY-MM-DD. new Date('YYYY-MM-DD') in JS is UTC.
+    // We want to treat it as a local date.
+    // Better: parse manually to avoid timezone shifts
+    const [y, m, day] = dateStr.split('-').map(Number)
+
     const today = todayStr()
-    if (dateStr === today) return `${month}月${day}日 · 今天`
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    if (dateStr === yesterday.toISOString().split('T')[0]) return `${month}月${day}日 · 昨天`
-    return `${d.getFullYear()}年${month}月${day}日`
+    if (dateStr === today) return `${m}月${day}日 · 今天`
+
+    // Check yesterday
+    const yestDate = new Date()
+    yestDate.setDate(yestDate.getDate() - 1)
+    const offset = yestDate.getTimezoneOffset() * 60000
+    const localYest = new Date(yestDate.getTime() - offset).toISOString().split('T')[0]
+
+    if (dateStr === localYest) return `${m}月${day}日 · 昨天`
+
+    return `${y}年${m}月${day}日`
 }

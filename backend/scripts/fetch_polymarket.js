@@ -3,10 +3,13 @@
 
 async function fetchData() {
     try {
-        const response = await fetch("https://gamma-api.polymarket.com/events?limit=5&closed=false&order=volume24hr&ascending=false");
+        const response = await fetch("https://gamma-api.polymarket.com/events?limit=10&closed=false&tag_slug=finance&order=volume24hr&ascending=false");
         const data = await response.json();
 
-        console.log(JSON.stringify(data[0], null, 2)); // Print the first event structure
+        console.log(`Found ${data.length} events for tag 'finance'`);
+        data.forEach(event => {
+            console.log(`- ${event.title} (Vol: $${event.volume})`);
+        });
     } catch (error) {
         console.error("Error fetching data:", error);
     }

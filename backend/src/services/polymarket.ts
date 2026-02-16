@@ -52,7 +52,7 @@ export class PolymarketService {
     private async fetchFromGamma(): Promise<any[]> {
         const baseUrl = 'https://gamma-api.polymarket.com/events';
         const params = new URLSearchParams({
-            limit: '20', // Fetch top 20 relevant events
+            limit: '30', // Fetch more to ensure we have at least 15 valid ones after filtering
             closed: 'false',
             // We can't filter by multiple tags in one query easily with their API sometimes, 
             // but let's try broader queries or multiple if needed. 
@@ -61,7 +61,7 @@ export class PolymarketService {
         });
 
         // We will fetch a few specific key tags in parallel to get a good mix
-        const tags = ['fed-rates', 'inflation', 'recession', 'economy', 'geopolitics'];
+        const tags = ['fed-rates', 'inflation', 'recession', 'economy', 'geopolitics', 'finance', 'commodities'];
         const results: any[] = [];
         const seenIds = new Set<string>();
 
