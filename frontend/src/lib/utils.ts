@@ -28,10 +28,8 @@ export function todayStr(): string {
 }
 
 export function formatDateCN(dateStr: string): string {
-    const d = new Date(dateStr) // Use local time parsing usually, or append T00:00:00 to force local?
-    // Actually dateStr is YYYY-MM-DD. new Date('YYYY-MM-DD') in JS is UTC.
+    // Manually parse to avoid timezone shifts (YYYY-MM-DD is UTC in Date constructor)
     // We want to treat it as a local date.
-    // Better: parse manually to avoid timezone shifts
     const [y, m, day] = dateStr.split('-').map(Number)
 
     const today = todayStr()
