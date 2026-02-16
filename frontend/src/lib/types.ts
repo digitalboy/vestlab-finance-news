@@ -61,3 +61,26 @@ export interface SourceConfig {
     color: string
     label: string
 }
+
+export interface PolymarketOutcome {
+    label: string
+    probability: number
+}
+
+export interface PolymarketMarket {
+    id: string
+    question: string
+    groupItemTitle: string
+    outcomes: PolymarketOutcome[]
+    volume: number
+}
+
+export interface PolymarketEvent {
+    id: string
+    title: string
+    description: string;
+    slug: string
+    marketCount: number
+    markets: PolymarketMarket[]
+    totalVolume: number
+}

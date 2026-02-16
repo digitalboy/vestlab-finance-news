@@ -4,6 +4,7 @@ import { DBService } from './services/db';
 import { RSSService } from './services/rss';
 import { AliyunService } from './services/aliyun';
 import { MarketDataService } from './services/market';
+import { PolymarketService } from './services/polymarket';
 import { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -63,6 +64,12 @@ app.get('/api/macro-news', async (c) => {
     const limit = Number(c.req.query('limit')) || 20;
     const news = await db.getRecentMacroNews(MACRO_SOURCES, 7, limit);
     return c.json(news);
+});
+
+app.get('/api/polymarket/macro', async (c) => {
+    const service = new PolymarketService();
+    const data = await service.getMacroMarkets();
+    return c.json(data);
 });
 
 // Manual Triggers
@@ -337,8 +344,14 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
     const marketData = await db.getLatestMarketData();
     console.log(`Found ${marketData.length} market data items for report.`);
 
-    // 4. Generate Report with Dual Context
-    const report = await ai.generateMarketReport(todayNews, marketData, session, macroNews);
+    // 4. Fetch Prediction Markets (Polymarket)
+    console.log('Fetching prediction markets...');
+    const polymarket = new PolymarketService();
+    const predictionMarkets = await polymarket.getMacroMarkets();
+    const predictionSummary = polymarket.generateMarketSummaryForAI(predictionMarkets);
+
+    // 5. Generate Report with Dual Context + Prediction
+    const report = await ai.generateMarketReport(todayNews, marketData, session, macroNews, predictionSummary);
 
     if (report) {
         // Format: 2026-02-13 → 2026年02月13日

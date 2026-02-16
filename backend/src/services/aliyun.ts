@@ -172,7 +172,7 @@ export class AliyunService {
         return block;
     }
 
-    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = [], session: 'morning' | 'evening' = 'morning', macroContext: any[] = []): Promise<string | null> {
+    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = [], session: 'morning' | 'evening' = 'morning', macroContext: any[] = [], predictionMarketSummary: string = ''): Promise<string | null> {
         if (!this.aliyunKey || newsItems.length === 0) return null;
 
         const now = new Date();
@@ -234,6 +234,8 @@ ${sessionGuidance}
 
 ${marketDataBlock}
 
+${predictionMarketSummary}
+
 ${macroBlock}
 
 **今日即时新闻列表**（共 ${newsItems.length} 条）：
@@ -242,13 +244,19 @@ ${newsContext}
 **报告结构**（使用 Markdown 格式）：
 
 ## 📊 市场脉搏
-用 2-3 句话概括${session === 'morning' ? '隔夜' : '今日'}全球市场整体情绪和核心主线。引用上方的真实指数数据。**请尝试结合“宏观背景”来解释今日的市场走势（如果有相关性）。**
+用 2-3 句话概括${session === 'morning' ? '隔夜' : '今日'}全球市场整体情绪和核心主线。引用上方的真实指数数据。**请尝试结合“宏观背景”和“预测市场情绪”来解释今日的市场走势（如果有相关性）。**
 
 ## 🔥 焦点事件
 挑选 3-5 条最重要的新闻深度解读，每条包含：
 - 事件概述
 - 对市场的影响
 - 对中国投资者的启示
+
+## 🎲 预测市场信号 (Smart Money Sentiment)
+**请基于提供的 Polymarket 数据，专门撰写一段分析。**
+- 总结当前市场对关键宏观事件（如降息、衰退）的共识概率。
+- 比较这些概率与当前新闻/资产价格是否一致？（例如：如果股市大跌但降息概率上升，说明市场在定价衰退风险）。
+- 如果没有提供预测市场数据，则跳过此部分。
 
 ## 📈 资产联动
 引用上方的真实指数、美元指数、美债收益率和商品数据，分析各大类资产联动逻辑：${session === 'morning' ? '美股（分板块）→ 美债收益率变动 → 美元指数 → 黄金/原油 → 加密货币等' : 'A股（分板块）→ 港股 → 日股 → 人民币汇率 → 美元指数 → 黄金/原油等'}。重点分析美债收益率和美元指数变动对全球资产的传导机制。

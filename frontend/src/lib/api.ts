@@ -1,4 +1,4 @@
-import type { MarketDataResponse, NewsItem, DailySummaryResponse } from './types'
+import type { MarketDataResponse, NewsItem, DailySummaryResponse, PolymarketEvent } from './types'
 
 const API_BASE = 'https://vestlab-finance-news-backend.digitalboyzone.workers.dev'
 
@@ -30,5 +30,11 @@ export async function fetchNews(limit = 80, query?: string): Promise<NewsItem[]>
 export async function fetchMacroNews(limit = 20): Promise<NewsItem[]> {
     const res = await fetch(`${API_BASE}/api/macro-news?limit=${limit}`)
     if (!res.ok) throw new Error(`Macro news fetch failed: ${res.status}`)
+    return res.json()
+}
+
+export async function fetchMacroPredictions(): Promise<PolymarketEvent[]> {
+    const res = await fetch(`${API_BASE}/api/polymarket/macro`)
+    if (!res.ok) throw new Error(`Polymarket fetch failed: ${res.status}`)
     return res.json()
 }
