@@ -201,12 +201,17 @@ const ALL_NEWS_SOURCES = [
 
     // Group F: Exchanges
     { name: 'Nasdaq Exchange', url: 'https://ir.nasdaq.com/rss/news-releases.xml?items=15' },
+
+    // Group G: International (BIS)
+    { name: 'BIS Central Bankers', url: 'https://www.bis.org/doclist/cbspeeches.rss' },
+    { name: 'BIS Management', url: 'https://www.bis.org/doclist/mgmtspeeches.rss' },
+    { name: 'BIS Research', url: 'https://www.bis.org/doclist/reshub_papers.rss' },
 ];
 
 async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
 
-    // Batch size = 2. Total ~21 sources.
-    // Cycle: ~11 batches.
+    // Batch size = 2. Total ~24 sources.
+    // Cycle: ~12 batches.
     const BATCH_SIZE = 2;
     const start = batchIndex * BATCH_SIZE;
     const end = start + BATCH_SIZE;
@@ -280,6 +285,9 @@ const MACRO_SOURCES = [
     'ECB Blog',
     'ECB Stat Press',
     'Nasdaq Exchange',
+    'BIS Central Bankers',
+    'BIS Management',
+    'BIS Research',
     'CEPR VoxEU'
 ];
 

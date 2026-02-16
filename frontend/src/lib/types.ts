@@ -52,7 +52,10 @@ export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ Worl
     | 'ECB Press & Policy'
     | 'ECB Blog'
     | 'ECB Stat Press'
-    | 'Nasdaq Exchange';
+    | 'Nasdaq Exchange'
+    | 'BIS Central Bankers'
+    | 'BIS Management'
+    | 'BIS Research';
 
 export interface SourceConfig {
     color: string

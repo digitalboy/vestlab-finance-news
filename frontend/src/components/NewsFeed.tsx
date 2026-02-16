@@ -38,6 +38,10 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     'ECB Stat Press': { color: 'bg-[#004494] text-white', label: 'ECB Stat' },
     // Exchanges
     'Nasdaq Exchange': { color: 'bg-[#0099CC] text-white', label: 'Nasdaq' },
+    // International
+    'BIS Central Bankers': { color: 'bg-[#4A5568] text-white', label: 'BIS CB' },
+    'BIS Management': { color: 'bg-[#2D3748] text-white', label: 'BIS Mgmt' },
+    'BIS Research': { color: 'bg-[#718096] text-white', label: 'BIS Research' },
 }
 
 function getSourceConfig(source: string): SourceConfig {
@@ -122,6 +126,9 @@ export function NewsFeed() {
                     <option value="ECB Blog">ECB Blog</option>
                     <option value="ECB Stat Press">ECB Stats</option>
                     <option value="Nasdaq Exchange">Nasdaq</option>
+                    <option value="BIS Central Bankers">BIS CB Speeches</option>
+                    <option value="BIS Management">BIS Mgmt</option>
+                    <option value="BIS Research">BIS Research</option>
                 </select>
             </div>
 
