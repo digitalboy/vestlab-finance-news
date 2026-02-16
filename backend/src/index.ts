@@ -170,6 +170,17 @@ const ALL_NEWS_SOURCES = [
     { name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
     { name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
     { name: 'France 24 World', url: 'https://www.france24.com/en/rss' },
+
+    // Group C: Asia Focus (Straits Times)
+    { name: 'ST Asia', url: 'https://www.straitstimes.com/news/asia/rss.xml' },
+    { name: 'ST Business', url: 'https://www.straitstimes.com/news/business/rss.xml' },
+    { name: 'ST World', url: 'https://www.straitstimes.com/news/world/rss.xml' },
+
+    // Group D: Think Tanks & Policies
+    { name: 'CEPR VoxEU', url: 'https://cepr.org/rss/vox-content' },
+    { name: 'Fed Board', url: 'https://www.federalreserve.gov/feeds/press_all.xml' },
+    { name: 'St Louis Fed Blog', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/blog-entries' },
+    { name: 'St Louis Fed Open Vault', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/open-vault-blog' },
 ];
 
 async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {

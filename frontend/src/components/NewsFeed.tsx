@@ -16,6 +16,16 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     'France 24 World': { color: 'bg-[#005eb8] text-white', label: 'France 24' },
     'BBC Business': { color: 'bg-[#bb1919] text-white', label: 'BBC Biz' },
     'The Economist': { color: 'bg-[#e3120b] text-white', label: 'Economist' },
+    // Straits Times
+    'ST Asia': { color: 'bg-[#2E3192] text-white', label: 'ST Asia' },
+    'ST Business': { color: 'bg-[#2E3192] text-white', label: 'ST Biz' },
+    'ST World': { color: 'bg-[#2E3192] text-white', label: 'ST World' },
+    // CEPR
+    'CEPR VoxEU': { color: 'bg-[#800000] text-white', label: 'VoxEU' },
+    // Gov
+    'Fed Board': { color: 'bg-[#003057] text-white', label: 'Fed' },
+    'St Louis Fed Blog': { color: 'bg-[#004c4c] text-white', label: 'STL Blog' },
+    'St Louis Fed Open Vault': { color: 'bg-[#006666] text-white', label: 'STL Vault' },
 }
 
 function getSourceConfig(source: string): SourceConfig {
@@ -84,6 +94,13 @@ export function NewsFeed() {
                     <option value="France 24 World">France 24 World</option>
                     <option value="BBC Business">BBC Business</option>
                     <option value="The Economist">The Economist</option>
+                    <option value="ST Asia">ST Asia</option>
+                    <option value="ST Business">ST Business</option>
+                    <option value="ST World">ST World</option>
+                    <option value="CEPR VoxEU">CEPR VoxEU</option>
+                    <option value="Fed Board">Fed Board</option>
+                    <option value="St Louis Fed Blog">STL Blog</option>
+                    <option value="St Louis Fed Open Vault">STL Open Vault</option>
                 </select>
             </div>
 
