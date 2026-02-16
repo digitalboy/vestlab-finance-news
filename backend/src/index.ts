@@ -110,13 +110,23 @@ export default {
 
         console.log(`Cron triggered: ${event.cron}`);
 
-        if (event.cron === '*/5 * * * *') {
-            // Fetch News: Spread across 4 batches (20 min cycle)
-            // 5-min interval: 0, 5, 10, 15, 20...
-            // Minute % 20 -> 0, 5, 10, 15
-            // Batch Index -> 0, 1, 2, 3
-            const minute = new Date(event.scheduledTime).getUTCMinutes();
-            const batchIndex = Math.floor((minute % 20) / 5);
+        if (event.cron === '*/3 * * * *') {
+            // Dynamic Batch Calculation
+            const FEED_BATCH_SIZE = 2; // Fetch 2 feeds per run
+            const totalBatches = Math.ceil(ALL_NEWS_SOURCES.length / FEED_BATCH_SIZE);
+
+            // Use total minutes since epoch to ensure stable rotation regardless of hour boundaries
+            // scheduledTime is in ms, divide by 60000 -> minutes
+            const epochMinutes = Math.floor(event.scheduledTime / 60000);
+
+            // Since triggers every 3 minutes, we step through batches: 0, 1, 2...
+            // Note: epochMinutes % 3 should be 0 (if aligned), but we just want an incrementing index
+            // (epochMinutes / 3) -> gives us the "run index"
+            const runIndex = Math.floor(epochMinutes / 3);
+
+            const batchIndex = runIndex % totalBatches;
+
+            console.log(`[Cron] Run Index: ${runIndex}, Batch: ${batchIndex}/${totalBatches}, Sources: ${ALL_NEWS_SOURCES.length}`);
 
             ctx.waitUntil(
                 Promise.all([
@@ -145,33 +155,43 @@ export default {
 
 // --- Helper Functions ---
 
-async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
-    const allSources = [
-        // Group A: Markets & Business (High Priority)
-        { name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
-        { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
-        { name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
-        { name: 'BBC Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml?edition=uk' },
-        { name: 'The Economist', url: 'https://www.economist.com/business/rss.xml' },
-        { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
-        { name: 'France 24 Business', url: 'https://www.france24.com/en/business-tech/rss' },
+const ALL_NEWS_SOURCES = [
+    // Group A: Markets & Business (High Priority)
+    { name: 'WSJ Markets', url: 'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain' },
+    { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
+    { name: 'NYT Business', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
+    { name: 'BBC Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml?edition=uk' },
+    { name: 'The Economist', url: 'https://www.economist.com/business/rss.xml' },
+    { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
+    { name: 'France 24 Business', url: 'https://www.france24.com/en/business-tech/rss' },
 
-        // Group B: Economy & World (Macro)
-        { name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
-        { name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
-        { name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
-        { name: 'France 24 World', url: 'https://www.france24.com/en/rss' },
-    ];
+    // Group B: Economy & World (Macro)
+    { name: 'WSJ Economy', url: 'https://feeds.content.dowjones.io/public/rss/socialeconomyfeed' },
+    { name: 'WSJ World', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
+    { name: 'NYT World', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+    { name: 'France 24 World', url: 'https://www.france24.com/en/rss' },
+];
+
+async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
 
     // Batch size = 3. Total 11 sources.
     // Batch 0: 0, 1, 2
     // Batch 1: 3, 4, 5
     // Batch 2: 6, 7, 8
     // Batch 3: 9, 10
-    const BATCH_SIZE = 3;
+    // Batch size = 2. Total 12 sources (approx).
+    // Cycle: 6 batches.
+    const BATCH_SIZE = 2;
     const start = batchIndex * BATCH_SIZE;
     const end = start + BATCH_SIZE;
-    const sources = allSources.slice(start, end);
+
+    // Ensure we don't go out of bounds (handle dynamic source count)
+    if (start >= ALL_NEWS_SOURCES.length) {
+        console.log(`[RSS] Batch ${batchIndex} is out of bounds (Total: ${ALL_NEWS_SOURCES.length}). Skipping.`);
+        return;
+    }
+
+    const sources = ALL_NEWS_SOURCES.slice(start, end);
 
     console.log(`[RSS] Fetching Batch ${batchIndex} (${sources.length} sources)...`);
 
@@ -275,8 +295,8 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
 async function generateTranslations(db: DBService, ai: AliyunService) {
     console.log('Starting daily translation...');
     console.log('Starting daily translation...');
-    // OPTIMIZATION: Reduce batch size to 5 to avoid CPU timeout
-    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 5);
+    // OPTIMIZATION: Reduce batch size to 3 to avoid CPU timeout
+    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 3);
 
     for (const news of newsItems) {
         if (!news.id) continue;
