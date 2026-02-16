@@ -115,6 +115,30 @@ export class DBService {
         return results;
     }
 
+    async getRecentMacroNews(sources: string[], days: number = 7, limit: number = 10): Promise<any[]> {
+        if (sources.length === 0) return [];
+
+        // Dynamic placeholders for IN clause
+        const placeholders = sources.map(() => '?').join(',');
+
+        const query = `
+            SELECT n.*, t.title as translated_title, t.content as translated_content
+            FROM news n
+            LEFT JOIN translations t ON n.id = t.news_id AND t.language = 'zh'
+            WHERE n.source IN (${placeholders})
+            AND n.published_at > datetime('now', '-${days} days')
+            ORDER BY n.published_at DESC
+            LIMIT ?
+        `;
+
+        // Bind args: sources... + limit
+        const { results } = await this.db.prepare(query)
+            .bind(...sources, limit)
+            .all();
+
+        return results;
+    }
+
     async getDailySummary(date: string, session?: string): Promise<string | null> {
         if (session) {
             const result = await this.db.prepare(

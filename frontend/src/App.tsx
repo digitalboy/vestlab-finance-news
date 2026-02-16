@@ -3,6 +3,7 @@ import './index.css'
 import { MarketTicker } from '@/components/MarketTicker'
 import { DailyBriefing } from '@/components/DailyBriefing'
 import { NewsFeed } from '@/components/NewsFeed'
+import { MacroFeed } from '@/components/MacroFeed'
 import { fetchMarketData } from '@/lib/api'
 import type { MarketDataItem } from '@/lib/types'
 
@@ -40,10 +41,16 @@ function App() {
       </header>
 
       {/* ═══ Main Content ═══ */}
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 lg:px-6 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <DailyBriefing />
+      <main className="flex-1 w-full px-4 lg:px-6 py-6 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full items-start">
+          {/* Col 1: High Frequency News */}
           <NewsFeed />
+
+          {/* Col 2: Macro Context */}
+          <MacroFeed />
+
+          {/* Col 3: AI Summary */}
+          <DailyBriefing />
         </div>
       </main>
 

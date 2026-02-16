@@ -58,6 +58,13 @@ app.get('/api/market-data', async (c) => {
     return c.json({ count: data.length, data });
 });
 
+app.get('/api/macro-news', async (c) => {
+    const db = new DBService(c.env.DB);
+    const limit = Number(c.req.query('limit')) || 20;
+    const news = await db.getRecentMacroNews(MACRO_SOURCES, 7, limit);
+    return c.json(news);
+});
+
 // Manual Triggers
 app.get('/trigger-fetch', async (c) => {
     const db = new DBService(c.env.DB);
@@ -179,19 +186,19 @@ const ALL_NEWS_SOURCES = [
     // Group D: Think Tanks & Policies
     { name: 'CEPR VoxEU', url: 'https://cepr.org/rss/vox-content' },
     { name: 'Fed Board', url: 'https://www.federalreserve.gov/feeds/press_all.xml' },
+    { name: 'Fed Monetary Policy', url: 'https://www.federalreserve.gov/feeds/press_monetary.xml' },
+    { name: 'Fed Speeches', url: 'https://www.federalreserve.gov/feeds/speeches.xml' },
+    { name: 'Fed Testimony', url: 'https://www.federalreserve.gov/feeds/testimony.xml' },
+    { name: 'Fed Rates (H.15)', url: 'https://www.federalreserve.gov/feeds/h15.xml' },
+    { name: 'Fed Ind Prod (G.17)', url: 'https://www.federalreserve.gov/feeds/g17.xml' },
     { name: 'St Louis Fed Blog', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/blog-entries' },
     { name: 'St Louis Fed Open Vault', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/open-vault-blog' },
 ];
 
 async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
 
-    // Batch size = 3. Total 11 sources.
-    // Batch 0: 0, 1, 2
-    // Batch 1: 3, 4, 5
-    // Batch 2: 6, 7, 8
-    // Batch 3: 9, 10
-    // Batch size = 2. Total 12 sources (approx).
-    // Cycle: 6 batches.
+    // Batch size = 2. Total ~17 sources.
+    // Cycle: ~9 batches.
     const BATCH_SIZE = 2;
     const start = batchIndex * BATCH_SIZE;
     const end = start + BATCH_SIZE;
@@ -252,6 +259,18 @@ async function fetchMarketData(db: DBService, market: MarketDataService) {
     }
 }
 
+const MACRO_SOURCES = [
+    'Fed Board',
+    'Fed Monetary Policy',
+    'Fed Speeches',
+    'Fed Testimony',
+    'Fed Rates (H.15)',
+    'Fed Ind Prod (G.17)',
+    'St Louis Fed Blog',
+    'St Louis Fed Open Vault',
+    'CEPR VoxEU'
+];
+
 async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 'morning' | 'evening' = 'morning') {
     const now = new Date();
     // Beijing Time (UTC+8) for Report Date/ID
@@ -279,19 +298,27 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
     }
 
     console.log(`Generating ${sessionLabel}...`);
+
+    // 1. Fetch Spot News (24h)
     const todayNews = await db.getNewsByDate(newsDate);
-    console.log(`Found ${todayNews.length} news items for ${newsDate}`);
+    console.log(`Found ${todayNews.length} spot news items for ${newsDate}`);
 
     if (todayNews.length === 0) {
-        console.log(`No news found for ${newsDate}. Skipping report.`);
+        console.log(`No spot news found for ${newsDate}. Skipping report.`);
         return;
     }
 
-    // Fetch today's market data for the report
+    // 2. Fetch Macro Context (7 days)
+    console.log('Fetching macro context...');
+    const macroNews = await db.getRecentMacroNews(MACRO_SOURCES, 7, 5);
+    console.log(`Found ${macroNews.length} macro context items.`);
+
+    // 3. Fetch Market Data
     const marketData = await db.getLatestMarketData();
     console.log(`Found ${marketData.length} market data items for report.`);
 
-    const report = await ai.generateMarketReport(todayNews, marketData, session);
+    // 4. Generate Report with Dual Context
+    const report = await ai.generateMarketReport(todayNews, marketData, session, macroNews);
 
     if (report) {
         // Format: 2026-02-13 → 2026年02月13日

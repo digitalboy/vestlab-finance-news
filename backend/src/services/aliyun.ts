@@ -172,7 +172,7 @@ export class AliyunService {
         return block;
     }
 
-    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = [], session: 'morning' | 'evening' = 'morning'): Promise<string | null> {
+    async generateMarketReport(newsItems: any[], marketData: MarketDataItem[] = [], session: 'morning' | 'evening' = 'morning', macroContext: any[] = []): Promise<string | null> {
         if (!this.aliyunKey || newsItems.length === 0) return null;
 
         const now = new Date();
@@ -184,9 +184,23 @@ export class AliyunService {
         const tradingDayNote = isWeekend
             ? '（今天是周末，全球主要股市休市，数据为最近一个交易日的收盘数据。请勿使用“今日市场”类表述，应使用“上一交易日”或“本周”来描述。）'
             : '（今天是交易日）';
+
         const newsContext = newsItems.map((n, i) =>
             `${i + 1}. [${n.source || '未知'}] ${n.title}\n   ${n.description || ''}`
         ).join('\n\n');
+
+        let macroBlock = '';
+        if (macroContext && macroContext.length > 0) {
+            const macroItems = macroContext.map((n, i) =>
+                `- [${n.source}] (${n.published_at?.split('T')[0]}) ${n.title}\n  ${n.description || ''}`
+            ).join('\n');
+
+            macroBlock = `
+【📅 近期宏观背景参考（过去7天）】
+以下是近期发布的重要宏观分析（即时性较低但影响深远），请在解读今日市场波动时，结合这些背景信息（例如：如果今日美债收益率变动，是否与前几天的联储官员讲话有关？）：
+${macroItems}
+`;
+        }
 
         const marketDataBlock = this.formatMarketDataForPrompt(marketData);
 
@@ -214,18 +228,21 @@ export class AliyunService {
 ${sessionEmoji} **${sessionLabel}定位**：
 ${sessionGuidance}
 
-新闻源涵盖六个维度：
-- **WSJ Markets**：美股、债券、大宗商品、投资趋势
-- **WSJ Economy**：就业、通胀、房地产等宏观经济数据
-- **WSJ World**：国际地缘政治、贸易关系、能源政策
-- **Bloomberg Markets**：全球股市、央行政策、并购IPO、加密货币
-- **NYT Business**：企业动态、科技产业、商业趋势
-- **NYT World**：国际政治、全球热点事件
+新闻源涵盖两个维度：
+1. **Spot News (即时新闻)**：过去24小时发生的市场动态。
+2. **Macro Context (宏观背景)**：过去7天发布的重要政策/智库分析。
+
 ${marketDataBlock}
+
+${macroBlock}
+
+**今日即时新闻列表**（共 ${newsItems.length} 条）：
+${newsContext}
+
 **报告结构**（使用 Markdown 格式）：
 
 ## 📊 市场脉搏
-用 2-3 句话概括${session === 'morning' ? '隔夜' : '今日'}全球市场整体情绪和核心主线。引用上方的真实指数数据。
+用 2-3 句话概括${session === 'morning' ? '隔夜' : '今日'}全球市场整体情绪和核心主线。引用上方的真实指数数据。**请尝试结合“宏观背景”来解释今日的市场走势（如果有相关性）。**
 
 ## 🔥 焦点事件
 挑选 3-5 条最重要的新闻深度解读，每条包含：
@@ -237,7 +254,7 @@ ${marketDataBlock}
 引用上方的真实指数、美元指数、美债收益率和商品数据，分析各大类资产联动逻辑：${session === 'morning' ? '美股（分板块）→ 美债收益率变动 → 美元指数 → 黄金/原油 → 加密货币等' : 'A股（分板块）→ 港股 → 日股 → 人民币汇率 → 美元指数 → 黄金/原油等'}。重点分析美债收益率和美元指数变动对全球资产的传导机制。
 
 ## 🌍 地缘与政策
-梳理可能影响市场的地缘政治动态和重要政策变化。
+梳理可能影响市场的地缘政治动态和重要政策变化。如果有相关的宏观背景信息，请在此处引用。
 
 ## 🔮 ${session === 'morning' ? '今日关注' : '明日关注'}
 列出${session === 'morning' ? '今日亚太交易日' : '明日或短期'}需要关注的事件/数据节点。
@@ -250,9 +267,6 @@ ${marketDataBlock}
 - 对于涉及中国的新闻（如中国汽车、贸易关系等），要特别深入分析
 - **必须准确引用上方提供的市场数据，不要编造任何数字**
 - 报告末尾署名：VestLab 新闻分析工程师 David，并注明日期 ${bjtDate} ${dayOfWeek}（${sessionLabel}）
-
-**今日新闻列表**（共 ${newsItems.length} 条）：
-${newsContext}
 `;
 
         try {

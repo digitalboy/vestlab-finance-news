@@ -23,7 +23,13 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     // CEPR
     'CEPR VoxEU': { color: 'bg-[#800000] text-white', label: 'VoxEU' },
     // Gov
+    // Gov
     'Fed Board': { color: 'bg-[#003057] text-white', label: 'Fed' },
+    'Fed Monetary Policy': { color: 'bg-[#003057] text-white', label: 'Fed Policy' },
+    'Fed Speeches': { color: 'bg-[#003057] text-white', label: 'Fed Speech' },
+    'Fed Testimony': { color: 'bg-[#003057] text-white', label: 'Fed Testify' },
+    'Fed Rates (H.15)': { color: 'bg-[#003057] text-white', label: 'Fed Rates' },
+    'Fed Ind Prod (G.17)': { color: 'bg-[#003057] text-white', label: 'Fed G.17' },
     'St Louis Fed Blog': { color: 'bg-[#004c4c] text-white', label: 'STL Blog' },
     'St Louis Fed Open Vault': { color: 'bg-[#006666] text-white', label: 'STL Vault' },
 }
@@ -67,12 +73,12 @@ export function NewsFeed() {
     }, [allNews, source])
 
     return (
-        <section className="lg:w-[40%] flex flex-col gap-4">
+        <section className="flex-1 flex flex-col gap-4 min-w-0">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-2 h-8 bg-amber-500 rounded-full" />
-                    <h2 className="text-xl font-bold text-white">新闻列表</h2>
+                    <h2 className="text-xl font-bold text-white">即时新闻</h2>
                     <span className="text-xs text-slate-500 bg-surface px-2 py-0.5 rounded-full">
                         {filtered.length}
                     </span>
@@ -99,6 +105,11 @@ export function NewsFeed() {
                     <option value="ST World">ST World</option>
                     <option value="CEPR VoxEU">CEPR VoxEU</option>
                     <option value="Fed Board">Fed Board</option>
+                    <option value="Fed Monetary Policy">Fed Policy</option>
+                    <option value="Fed Speeches">Fed Speech</option>
+                    <option value="Fed Testimony">Fed Testify</option>
+                    <option value="Fed Rates (H.15)">Fed Rates</option>
+                    <option value="Fed Ind Prod (G.17)">Fed G.17</option>
                     <option value="St Louis Fed Blog">STL Blog</option>
                     <option value="St Louis Fed Open Vault">STL Open Vault</option>
                 </select>

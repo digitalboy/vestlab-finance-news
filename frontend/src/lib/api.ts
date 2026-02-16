@@ -26,3 +26,9 @@ export async function fetchNews(limit = 80, query?: string): Promise<NewsItem[]>
     if (!res.ok) throw new Error(`News fetch failed: ${res.status}`)
     return res.json()
 }
+
+export async function fetchMacroNews(limit = 20): Promise<NewsItem[]> {
+    const res = await fetch(`${API_BASE}/api/macro-news?limit=${limit}`)
+    if (!res.ok) throw new Error(`Macro news fetch failed: ${res.status}`)
+    return res.json()
+}

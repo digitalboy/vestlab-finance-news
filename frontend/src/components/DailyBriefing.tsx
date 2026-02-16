@@ -87,12 +87,12 @@ export function DailyBriefing() {
     }
 
     return (
-        <section className="lg:w-[60%] flex flex-col gap-4">
+        <section className="flex-1 flex flex-col gap-4 min-w-0">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-2 h-8 bg-indigo-500 rounded-full" />
-                    <h1 className="text-xl font-bold text-white">每日市场简报</h1>
+                    <div className="w-2 h-8 bg-purple-600 rounded-full" />
+                    <h2 className="text-xl font-bold text-white">AI 分析</h2>
                 </div>
 
                 {/* Calendar Trigger */}
@@ -136,10 +136,10 @@ export function DailyBriefing() {
                         <button
                             onClick={() => setActiveSession('morning')}
                             className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeSession === 'morning'
-                                    ? 'border-amber-400 text-amber-300 bg-amber-500/5'
-                                    : hasMorning
-                                        ? 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-surface-hover'
-                                        : 'border-transparent text-slate-600 cursor-not-allowed'
+                                ? 'border-amber-400 text-amber-300 bg-amber-500/5'
+                                : hasMorning
+                                    ? 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-surface-hover'
+                                    : 'border-transparent text-slate-600 cursor-not-allowed'
                                 }`}
                             disabled={!hasMorning}
                         >
@@ -150,10 +150,10 @@ export function DailyBriefing() {
                         <button
                             onClick={() => setActiveSession('evening')}
                             className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeSession === 'evening'
-                                    ? 'border-indigo-400 text-indigo-300 bg-indigo-500/5'
-                                    : hasEvening
-                                        ? 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-surface-hover'
-                                        : 'border-transparent text-slate-600 cursor-not-allowed'
+                                ? 'border-indigo-400 text-indigo-300 bg-indigo-500/5'
+                                : hasEvening
+                                    ? 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-surface-hover'
+                                    : 'border-transparent text-slate-600 cursor-not-allowed'
                                 }`}
                             disabled={!hasEvening}
                         >

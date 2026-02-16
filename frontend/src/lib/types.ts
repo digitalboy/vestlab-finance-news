@@ -41,7 +41,14 @@ export interface DailySummaryResponse {
     summaries?: SummaryItem[]
 }
 
-export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ World' | 'NYT Business' | 'NYT World' | 'TechCrunch' | 'France 24 Business' | 'France 24 World' | 'BBC Business' | 'The Economist' | 'ST Asia' | 'ST Business' | 'ST World' | 'CEPR VoxEU' | 'Fed Board' | 'St Louis Fed Blog' | 'St Louis Fed Open Vault'
+export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ World' | 'NYT Business' | 'NYT World' | 'TechCrunch' | 'France 24 Business' | 'France 24 World' | 'BBC Business' | 'The Economist' | 'ST Asia' | 'ST Business' | 'ST World' | 'CEPR VoxEU' | 'Fed Board'
+    | 'Fed Monetary Policy'
+    | 'Fed Speeches'
+    | 'Fed Testimony'
+    | 'Fed Rates (H.15)'
+    | 'Fed Ind Prod (G.17)'
+    | 'St Louis Fed Blog'
+    | 'St Louis Fed Open Vault';
 
 export interface SourceConfig {
     color: string
