@@ -51,7 +51,8 @@ export type NewsSource = 'Bloomberg' | 'WSJ Markets' | 'WSJ Economy' | 'WSJ Worl
     | 'St Louis Fed Open Vault'
     | 'ECB Press & Policy'
     | 'ECB Blog'
-    | 'ECB Stat Press';
+    | 'ECB Stat Press'
+    | 'Nasdaq Exchange';
 
 export interface SourceConfig {
     color: string

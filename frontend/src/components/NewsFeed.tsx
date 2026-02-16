@@ -36,6 +36,8 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     'ECB Press & Policy': { color: 'bg-[#004494] text-white', label: 'ECB' },
     'ECB Blog': { color: 'bg-[#FFCC00] text-black', label: 'ECB Blog' },
     'ECB Stat Press': { color: 'bg-[#004494] text-white', label: 'ECB Stat' },
+    // Exchanges
+    'Nasdaq Exchange': { color: 'bg-[#0099CC] text-white', label: 'Nasdaq' },
 }
 
 function getSourceConfig(source: string): SourceConfig {
@@ -119,6 +121,7 @@ export function NewsFeed() {
                     <option value="ECB Press & Policy">ECB</option>
                     <option value="ECB Blog">ECB Blog</option>
                     <option value="ECB Stat Press">ECB Stats</option>
+                    <option value="Nasdaq Exchange">Nasdaq</option>
                 </select>
             </div>
 

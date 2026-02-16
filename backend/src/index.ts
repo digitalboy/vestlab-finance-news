@@ -198,12 +198,15 @@ const ALL_NEWS_SOURCES = [
     { name: 'ECB Press & Policy', url: 'https://www.ecb.europa.eu/rss/press.html' },
     { name: 'ECB Blog', url: 'https://www.ecb.europa.eu/rss/blog.html' },
     { name: 'ECB Stat Press', url: 'https://www.ecb.europa.eu/rss/statpress.html' },
+
+    // Group F: Exchanges
+    { name: 'Nasdaq Exchange', url: 'https://ir.nasdaq.com/rss/news-releases.xml?items=15' },
 ];
 
 async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
 
-    // Batch size = 2. Total ~20 sources.
-    // Cycle: ~10 batches.
+    // Batch size = 2. Total ~21 sources.
+    // Cycle: ~11 batches.
     const BATCH_SIZE = 2;
     const start = batchIndex * BATCH_SIZE;
     const end = start + BATCH_SIZE;
@@ -276,6 +279,7 @@ const MACRO_SOURCES = [
     'ECB Press & Policy',
     'ECB Blog',
     'ECB Stat Press',
+    'Nasdaq Exchange',
     'CEPR VoxEU'
 ];
 
