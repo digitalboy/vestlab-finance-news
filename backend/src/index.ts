@@ -193,12 +193,17 @@ const ALL_NEWS_SOURCES = [
     { name: 'Fed Ind Prod (G.17)', url: 'https://www.federalreserve.gov/feeds/g17.xml' },
     { name: 'St Louis Fed Blog', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/blog-entries' },
     { name: 'St Louis Fed Open Vault', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/open-vault-blog' },
+
+    // Group E: Europe (ECB)
+    { name: 'ECB Press & Policy', url: 'https://www.ecb.europa.eu/rss/press.html' },
+    { name: 'ECB Blog', url: 'https://www.ecb.europa.eu/rss/blog.html' },
+    { name: 'ECB Stat Press', url: 'https://www.ecb.europa.eu/rss/statpress.html' },
 ];
 
 async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
 
-    // Batch size = 2. Total ~17 sources.
-    // Cycle: ~9 batches.
+    // Batch size = 2. Total ~20 sources.
+    // Cycle: ~10 batches.
     const BATCH_SIZE = 2;
     const start = batchIndex * BATCH_SIZE;
     const end = start + BATCH_SIZE;
@@ -268,6 +273,9 @@ const MACRO_SOURCES = [
     'Fed Ind Prod (G.17)',
     'St Louis Fed Blog',
     'St Louis Fed Open Vault',
+    'ECB Press & Policy',
+    'ECB Blog',
+    'ECB Stat Press',
     'CEPR VoxEU'
 ];
 

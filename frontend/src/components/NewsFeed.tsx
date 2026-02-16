@@ -32,6 +32,10 @@ const SOURCE_CONFIG: Record<string, SourceConfig> = {
     'Fed Ind Prod (G.17)': { color: 'bg-[#003057] text-white', label: 'Fed G.17' },
     'St Louis Fed Blog': { color: 'bg-[#004c4c] text-white', label: 'STL Blog' },
     'St Louis Fed Open Vault': { color: 'bg-[#006666] text-white', label: 'STL Vault' },
+    // ECB
+    'ECB Press & Policy': { color: 'bg-[#004494] text-white', label: 'ECB' },
+    'ECB Blog': { color: 'bg-[#FFCC00] text-black', label: 'ECB Blog' },
+    'ECB Stat Press': { color: 'bg-[#004494] text-white', label: 'ECB Stat' },
 }
 
 function getSourceConfig(source: string): SourceConfig {
@@ -112,6 +116,9 @@ export function NewsFeed() {
                     <option value="Fed Ind Prod (G.17)">Fed G.17</option>
                     <option value="St Louis Fed Blog">STL Blog</option>
                     <option value="St Louis Fed Open Vault">STL Open Vault</option>
+                    <option value="ECB Press & Policy">ECB</option>
+                    <option value="ECB Blog">ECB Blog</option>
+                    <option value="ECB Stat Press">ECB Stats</option>
                 </select>
             </div>
 
