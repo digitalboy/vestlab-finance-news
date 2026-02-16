@@ -17,9 +17,9 @@ function App() {
   }, [])
 
   return (
-    <div className="bg-[#0a0f1a] text-slate-200 font-sans min-h-screen flex flex-col">
+    <div className="bg-[#0a0f1a] text-slate-200 font-sans min-h-screen lg:h-screen flex flex-col lg:overflow-hidden">
       {/* ═══ Top Nav ═══ */}
-      <header className="sticky top-0 z-50 border-b border-border-subtle bg-surface-alt/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border-subtle bg-surface-alt/90 backdrop-blur-xl shrink-0">
         <div className="flex items-center">
           {/* Logo */}
           <div className="flex items-center gap-2.5 px-5 py-2 border-r border-border-subtle shrink-0">
@@ -41,8 +41,8 @@ function App() {
       </header>
 
       {/* ═══ Main Content ═══ */}
-      <main className="flex-1 w-full px-4 lg:px-6 py-6 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full items-start">
+      <main className="flex-1 w-full px-4 lg:px-6 py-6 lg:overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full lg:grid-rows-1">
           {/* Col 1: High Frequency News */}
           <NewsFeed />
 

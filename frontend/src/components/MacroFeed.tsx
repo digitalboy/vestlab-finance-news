@@ -15,7 +15,7 @@ export function MacroFeed() {
     }, [])
 
     return (
-        <section className="flex-1 flex flex-col gap-4 min-w-0">
+        <section className="flex-1 flex flex-col gap-4 min-w-0 h-full">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <div className="w-2 h-8 bg-blue-600 rounded-full" />
@@ -26,7 +26,7 @@ export function MacroFeed() {
             </div>
 
             {/* List */}
-            <div className="flex flex-col gap-3 custom-scroll max-h-[calc(100vh-240px)] overflow-y-auto pr-1">
+            <div className="flex-1 flex flex-col gap-3 custom-scroll overflow-y-auto pr-1 min-h-0">
                 {loading ? (
                     <div className="space-y-3">
                         {[1, 2].map(i => (

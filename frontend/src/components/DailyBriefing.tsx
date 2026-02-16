@@ -87,7 +87,7 @@ export function DailyBriefing() {
     }
 
     return (
-        <section className="flex-1 flex flex-col gap-4 min-w-0">
+        <section className="flex-1 flex flex-col gap-4 min-w-0 h-full">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -129,10 +129,10 @@ export function DailyBriefing() {
             </div>
 
             {/* Briefing Card */}
-            <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden shadow-2xl shadow-black/20">
+            <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden shadow-2xl shadow-black/20 flex-1 flex flex-col min-h-0">
                 {/* Session Tabs */}
                 {!loading && summaries.length > 0 && (
-                    <div className="flex items-center border-b border-border-subtle">
+                    <div className="flex items-center border-b border-border-subtle shrink-0">
                         <button
                             onClick={() => setActiveSession('morning')}
                             className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeSession === 'morning'
@@ -175,7 +175,7 @@ export function DailyBriefing() {
                     </div>
                 )}
 
-                <div className="p-6 lg:p-8 prose-finance custom-scroll max-h-[calc(100vh-220px)] overflow-y-auto">
+                <div className="p-6 lg:p-8 prose-finance custom-scroll overflow-y-auto flex-1 min-h-0">
                     {loading ? (
                         <div className="space-y-4">
                             <div className="skeleton h-8 w-3/4" />
