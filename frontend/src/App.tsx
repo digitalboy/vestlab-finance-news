@@ -4,6 +4,7 @@ import { MarketTicker } from '@/components/MarketTicker'
 import { DailyBriefing } from '@/components/DailyBriefing'
 import { NewsFeed } from '@/components/NewsFeed'
 import { MacroFeed } from '@/components/MacroFeed'
+import { MacroPredictionSection } from '@/components/MacroPredictionSection'
 import { fetchMarketData } from '@/lib/api'
 import type { MarketDataItem } from '@/lib/types'
 
@@ -41,8 +42,12 @@ function App() {
       </header>
 
       {/* ═══ Main Content ═══ */}
-      <main className="flex-1 w-full px-4 lg:px-6 py-6 lg:overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full lg:grid-rows-1">
+      <main className="flex-1 w-full px-4 lg:px-6 py-6 lg:overflow-hidden flex flex-col gap-6">
+
+        {/* Prediction Markets Banner */}
+        <MacroPredictionSection />
+
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0 lg:grid-rows-1">
           {/* Col 1: High Frequency News */}
           <NewsFeed />
 

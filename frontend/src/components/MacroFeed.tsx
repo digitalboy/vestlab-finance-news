@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import type { NewsItem } from '@/lib/types'
 import { timeAgo } from '@/lib/utils'
 import { fetchMacroNews } from '@/lib/api'
-import { MacroPredictionSection } from './MacroPredictionSection'
 
 export function MacroFeed() {
     const [news, setNews] = useState<NewsItem[]>([])
@@ -17,8 +16,6 @@ export function MacroFeed() {
 
     return (
         <section className="flex-1 flex flex-col gap-4 min-w-0 h-full">
-            <MacroPredictionSection />
-
             {/* Header */}
             <div className="flex items-center gap-3">
                 <div className="w-2 h-8 bg-blue-600 rounded-full" />
