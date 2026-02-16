@@ -353,8 +353,9 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
 async function generateTranslations(db: DBService, ai: AliyunService) {
     console.log('Starting daily translation...');
     console.log('Starting daily translation...');
-    // OPTIMIZATION: Reduce batch size to 3 to avoid CPU timeout
-    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 3);
+    // OPTIMIZATION: Increased batch size to 10 to prevent backlog
+    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 10);
+    console.log(`Found ${newsItems.length} items to translate.`);
 
     for (const news of newsItems) {
         if (!news.id) continue;
