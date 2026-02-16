@@ -8,7 +8,7 @@ export function MacroFeed() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetchMacroNews()
+        fetchMacroNews(80)
             .then(setNews)
             .catch(() => setNews([]))
             .finally(() => setLoading(false))
