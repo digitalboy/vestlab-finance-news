@@ -144,7 +144,9 @@ export default {
 
             ctx.waitUntil(
                 Promise.all([
-                    fetchNews(db, rss, batchIndex).then(() => generateTranslations(db, ai)),
+                    fetchNews(db, rss, batchIndex),
+                    // Always run translation check (decoupled from fetch success)
+                    generateTranslations(db, ai),
                     fetchMarketData(db, market),
                 ])
             );
@@ -199,7 +201,7 @@ const ALL_NEWS_SOURCES = [
     { name: 'Fed Rates (H.15)', url: 'https://www.federalreserve.gov/feeds/h15.xml' },
     { name: 'Fed Ind Prod (G.17)', url: 'https://www.federalreserve.gov/feeds/g17.xml' },
     { name: 'St Louis Fed Blog', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/blog-entries' },
-    { name: 'St Louis Fed Open Vault', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/open-vault-blog' },
+    // { name: 'St Louis Fed Open Vault', url: 'https://www.stlouisfed.org/rss/page%20resources/publications/open-vault-blog' },
 
     // Group E: Europe (ECB)
     { name: 'ECB Press & Policy', url: 'https://www.ecb.europa.eu/rss/press.html' },
