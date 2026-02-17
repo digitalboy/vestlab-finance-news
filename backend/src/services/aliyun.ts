@@ -3,6 +3,8 @@ import { Env, MarketDataItem } from '../types';
 const DASHSCOPE_ENDPOINT = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
 const CLOUDFLARE_AI_GATEWAY = 'https://gateway.ai.cloudflare.com/v1/d06c9445a2675bdbf52fe47eab4f0278/beike/compat';
 
+import { MarketHolidayService } from './holidays';
+
 export class AliyunService {
     private aliyunKey: string;
     private googleKey: string;
@@ -10,6 +12,12 @@ export class AliyunService {
     constructor(env: Env) {
         this.aliyunKey = env.ALIYUN_API_KEY;
         this.googleKey = env.GOOGLE_AI_KEY || '';
+    }
+
+    private getNextDay(dateStr: string): string {
+        const d = new Date(dateStr);
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split('T')[0];
     }
 
     /**
