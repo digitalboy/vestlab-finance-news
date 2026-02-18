@@ -155,7 +155,18 @@ export class AliyunService {
             const change = m.change_percent != null ? `${sign}${m.change_percent.toFixed(2)}%` : 'N/A';
             const dataDate = m.market_time ? m.market_time.split('T')[0] : '';
             const stale = dataDate && dataDate !== bjtToday ? ` [${dataDate} \u2014 \u975E\u4ECA\u65E5\u6570\u636E]` : '';
-            return `- ${m.name} (${m.symbol}): ${price} (${change})${stale}`;
+
+            let rangeInfo = '';
+            if (m.fifty_two_week_high != null && m.fifty_two_week_low != null) {
+                // Calculate position in range (0% = low, 100% = high)
+                const range = m.fifty_two_week_high - m.fifty_two_week_low;
+                if (m.price != null && range > 0) {
+                    const pos = ((m.price - m.fifty_two_week_low) / range) * 100;
+                    rangeInfo = ` (52W: ${m.fifty_two_week_low.toFixed(0)}-${m.fifty_two_week_high.toFixed(0)}, Pos: ${pos.toFixed(0)}%)`;
+                }
+            }
+
+            return `- ${m.name} (${m.symbol}): ${price} (${change})${rangeInfo}${stale}`;
         };
 
         let block = '\n\ud83d\udcca **\u5168\u7403\u5e02\u573a\u6570\u636e\uff08\u6765\u81ea Yahoo Finance\uff09**\uff1a\n';

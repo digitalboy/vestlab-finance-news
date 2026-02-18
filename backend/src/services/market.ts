@@ -152,6 +152,8 @@ export class MarketDataService {
             previous_close: prevClose != null ? Math.round(prevClose * 100) / 100 : null,
             market_time: new Date(ts * 1000).toISOString(),
             date: new Date(ts * 1000).toISOString().split('T')[0],
+            fifty_two_week_high: meta.fiftyTwoWeekHigh || null,
+            fifty_two_week_low: meta.fiftyTwoWeekLow || null,
         };
     }
 

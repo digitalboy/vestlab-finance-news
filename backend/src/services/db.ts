@@ -172,8 +172,8 @@ export class DBService {
         try {
             await this.db.prepare(
                 `INSERT OR REPLACE INTO market_data
-                 (symbol, name, type, price, change_amount, change_percent, day_high, day_low, previous_close, market_time, date)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                 (symbol, name, type, price, change_amount, change_percent, day_high, day_low, previous_close, market_time, date, fifty_two_week_high, fifty_two_week_low)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             ).bind(
                 item.symbol,
                 item.name,
@@ -185,7 +185,9 @@ export class DBService {
                 item.day_low,
                 item.previous_close,
                 item.market_time,
-                item.date
+                item.date,
+                item.fifty_two_week_high || null,
+                item.fifty_two_week_low || null
             ).run();
         } catch (e) {
             console.error(`Error saving market data for ${item.symbol}:`, e);

@@ -35,6 +35,8 @@ export interface MarketDataItem {
     market_time: string | null;
     fetched_at?: string;
     date: string;
+    fifty_two_week_high?: number | null;
+    fifty_two_week_low?: number | null;
 }
 
 export interface Env {
