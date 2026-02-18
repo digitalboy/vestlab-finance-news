@@ -151,15 +151,13 @@ export default {
                 ])
             );
         } else if (event.cron === '0 0 * * *') {
-            // UTC 00:00 (BJT 08:00): Morning briefing — covers US/EU close
-            ctx.waitUntil(
-                fetchMarketData(db, market).then(() => generateDailyBriefing(db, ai, 'morning'))
-            );
+            // UTC 00:00 (BJT 08:00): Morning Briefing
+            console.log('[Cron] Triggering Morning Briefing...');
+            ctx.waitUntil(generateDailyBriefing(db, ai, 'morning'));
         } else if (event.cron === '0 12 * * *') {
-            // UTC 12:00 (BJT 20:00): Evening briefing — covers Asia close
-            ctx.waitUntil(
-                fetchMarketData(db, market).then(() => generateDailyBriefing(db, ai, 'evening'))
-            );
+            // UTC 12:00 (BJT 20:00): Evening Briefing
+            console.log('[Cron] Triggering Evening Briefing...');
+            ctx.waitUntil(generateDailyBriefing(db, ai, 'evening'));
         } else {
             console.log('Unknown cron trigger, running default fetch + translate');
             ctx.waitUntil(
