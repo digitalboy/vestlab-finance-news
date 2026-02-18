@@ -86,7 +86,22 @@ app.get('/trigger-fetch', async (c) => {
 app.get('/trigger-summary', async (c) => {
     const db = new DBService(c.env.DB);
     const ai = new AliyunService(c.env);
-    const session = (c.req.query('session') as 'morning' | 'evening') || 'morning';
+
+    // Auto-detect session if not provided
+    let session = c.req.query('session') as 'morning' | 'evening';
+    if (!session) {
+        // Beijing Time
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const beijingTime = new Date(utc + (3600000 * 8));
+        const hour = beijingTime.getHours();
+
+        // Morning Briefing: 08:00 (so < 14:00 is Morning)
+        // Evening Briefing: 20:00 (so >= 14:00 is Evening)
+        // Simple cutoff: If it's past 2 PM, generate Evening. Else Morning.
+        session = hour >= 14 ? 'evening' : 'morning';
+        console.log(`[Trigger] Auto-detected session: ${session} (BJT Hour: ${hour})`);
+    }
 
     // Manually trigger daily briefing for specified session
     await generateDailyBriefing(db, ai, session);
