@@ -12,7 +12,7 @@ database_id = "dec8c4bf-98bd-4e9a-b32b-ba613d6f8b09" # Shared DB
 [triggers]
 crons = [
     "*/3 * * * *", # Fetch News (Every 3 mins)
-    "0 0 * * *",    # Morning Briefing (UTC 00:00 = BJT 08:00, covers US/EU close)
+    "0 0 * * *",    # Morning Briefing + Polymarket Snapshot (UTC 00:00 = BJT 08:00)
     "0 12 * * *",   # Evening Briefing (UTC 12:00 = BJT 20:00, covers Asia close)
 ]
 

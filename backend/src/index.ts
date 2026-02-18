@@ -111,6 +111,12 @@ app.get('/trigger-market-fetch', async (c) => {
     return c.json(result);
 });
 
+app.get('/trigger-polymarket-snapshot', async (c) => {
+    const db = new DBService(c.env.DB);
+    await savePolymarketSnapshot(db);
+    return c.text('Polymarket snapshot triggered');
+});
+
 app.get('/', (c) => c.text('VestLab Finance News Worker (Hono)'));
 
 // Export functions for Worker (fetch) and Cron (scheduled)
@@ -153,7 +159,10 @@ export default {
         } else if (event.cron === '0 0 * * *') {
             // UTC 00:00 (BJT 08:00): Morning Briefing
             console.log('[Cron] Triggering Morning Briefing...');
-            ctx.waitUntil(generateDailyBriefing(db, ai, 'morning'));
+            ctx.waitUntil(Promise.all([
+                generateDailyBriefing(db, ai, 'morning'),
+                savePolymarketSnapshot(db) // Save daily snapshot at start of day
+            ]));
         } else if (event.cron === '0 12 * * *') {
             // UTC 12:00 (BJT 20:00): Evening Briefing
             console.log('[Cron] Triggering Evening Briefing...');
@@ -166,6 +175,25 @@ export default {
         }
     }
 };
+
+async function savePolymarketSnapshot(db: DBService) {
+    try {
+        console.log('[Cron] Saving Polymarket Snapshot...');
+        const polymarket = new PolymarketService();
+        const markets = await polymarket.getMacroMarkets();
+
+        // Save current state with today's date (Beijing Time approx or UTC)
+        // We use simple YYYY-MM-DD based on UTC for consistency in DB
+        const today = new Date().toISOString().split('T')[0];
+
+        const itemsToSave = polymarket.prepareForStorage(markets, today);
+        if (itemsToSave.length > 0) {
+            await db.savePredictionMarketHistory(itemsToSave);
+        }
+    } catch (e) {
+        console.error('[Cron] Error saving Polymarket snapshot:', e);
+    }
+}
 
 // --- Helper Functions ---
 
@@ -344,11 +372,19 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
     const marketData = await db.getLatestMarketData();
     console.log(`Found ${marketData.length} market data items for report.`);
 
-    // 4. Fetch Prediction Markets (Polymarket)
+    // 4. Fetch Prediction Markets (Polymarket) with History
     console.log('Fetching prediction markets...');
     const polymarket = new PolymarketService();
-    const predictionMarkets = await polymarket.getMacroMarkets();
-    const predictionSummary = polymarket.generateMarketSummaryForAI(predictionMarkets);
+    const currentMarkets = await polymarket.getMacroMarkets();
+
+    // Get history (yesterday) for delta
+    // Approximate "yesterday" from report date
+    const historyDate = new Date(new Date(reportDate).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const historyItems = await db.getPredictionMarketHistory(historyDate);
+    console.log(`Found ${historyItems.length} historical prediction items from ${historyDate}`);
+
+    const marketsWithHistory = polymarket.compareWithHistory(currentMarkets, historyItems);
+    const predictionSummary = polymarket.generateMarketSummaryForAI(marketsWithHistory);
 
     // 5. Generate Report with Dual Context + Prediction
     const report = await ai.generateMarketReport(todayNews, marketData, session, macroNews, predictionSummary);

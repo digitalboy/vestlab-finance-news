@@ -226,4 +226,43 @@ export class DBService {
         ).all<{ symbol: string }>();
         return new Set(results.map(r => r.symbol));
     }
+
+    // --- Prediction Market History (Polymarket) ---
+
+    async savePredictionMarketHistory(items: any[]): Promise<void> {
+        if (!items || items.length === 0) return;
+        const stmt = this.db.prepare(
+            `INSERT OR REPLACE INTO prediction_market_history 
+             (id, event_id, market_id, title, outcome_label, probability, volume, date)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        );
+        const batch = items.map(item => stmt.bind(
+            item.id,
+            item.event_id,
+            item.market_id,
+            item.title,
+            item.outcome_label,
+            item.probability,
+            item.volume,
+            item.date
+        ));
+        await this.db.batch(batch);
+        console.log(`[DB] Saved ${items.length} prediction market history records.`);
+    }
+
+    async getPredictionMarketHistory(date: string): Promise<any[]> {
+        const { results } = await this.db.prepare(
+            'SELECT * FROM prediction_market_history WHERE date = ?'
+        ).bind(date).all();
+        return results;
+    }
+
+    async getLatestPredictionMarketData(): Promise<any[]> {
+        const latest = await this.db.prepare(
+            'SELECT MAX(date) as max_date FROM prediction_market_history'
+        ).first<{ max_date: string }>();
+
+        if (!latest?.max_date) return [];
+        return this.getPredictionMarketHistory(latest.max_date);
+    }
 }

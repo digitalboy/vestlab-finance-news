@@ -198,6 +198,24 @@ paths:
                     type: string
                     nullable: true
                     description: 错误信息（仅 action=error 时有值）
+                    example: null
+
+  /trigger-polymarket-snapshot:
+    get:
+      tags: [Triggers]
+      summary: 手动触发 Polymarket 快照
+      description: |
+        手动抓取 Polymarket 宏观预测市场数据并保存快照到数据库。
+        用于记录每日概率变化历史。
+      operationId: triggerPolymarketSnapshot
+      responses:
+        '200':
+          description: 快照保存成功
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Polymarket snapshot triggered
 
 components:
   schemas:

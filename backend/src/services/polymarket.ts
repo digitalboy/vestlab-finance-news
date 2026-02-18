@@ -151,6 +151,64 @@ export class PolymarketService {
     }
 
     /**
+     * Compare current markets with historical data to compute deltas
+     */
+    compareWithHistory(currentMarkets: any[], historyItems: any[]): any[] {
+        if (!historyItems || historyItems.length === 0) return currentMarkets;
+
+        const historyMap = new Map<string, number>();
+        // Key: market_id + outcome_label -> probability
+        for (const item of historyItems) {
+            historyMap.set(`${item.market_id}|${item.outcome_label}`, item.probability);
+        }
+
+        for (const event of currentMarkets) {
+            for (const market of event.markets) {
+                for (const outcome of market.outcomes) {
+                    const key = `${market.id}|${outcome.label}`;
+                    if (historyMap.has(key)) {
+                        const prevProb = historyMap.get(key)!;
+                        const diff = outcome.probability - prevProb;
+                        // Avoid floating point noise
+                        if (Math.abs(diff) > 0.001) {
+                            outcome.delta = diff;
+                        } else {
+                            outcome.delta = 0;
+                        }
+                    } else {
+                        outcome.isNew = true;
+                    }
+                }
+            }
+        }
+        return currentMarkets;
+    }
+
+    /**
+     * Flatten current markets for DB storage
+     */
+    prepareForStorage(markets: any[], date: string): any[] {
+        const items: any[] = [];
+        for (const event of markets) {
+            for (const market of event.markets) {
+                for (const outcome of market.outcomes) {
+                    items.push({
+                        id: `${market.id}-${outcome.label}-${date}`, // Unique ID per day
+                        event_id: event.id,
+                        market_id: market.id,
+                        title: event.title + (market.groupItemTitle ? ` - ${market.groupItemTitle}` : ''),
+                        outcome_label: outcome.label,
+                        probability: outcome.probability,
+                        volume: market.volume,
+                        date: date
+                    });
+                }
+            }
+        }
+        return items;
+    }
+
+    /**
      * Generate a text summary of key markets for AI injection
      */
     generateMarketSummaryForAI(markets: any[]): string {
@@ -171,17 +229,40 @@ export class PolymarketService {
                 const subMarkets = event.markets.sort((a: any, b: any) => b.volume - a.volume).slice(0, 3);
                 const details = subMarkets.map((m: any) => {
                     const topOutcome = m.outcomes.reduce((prev: any, current: any) => (prev.probability > current.probability) ? prev : current);
-                    return `[${m.groupItemTitle || 'Main'} -> ${topOutcome.label}: ${(topOutcome.probability * 100).toFixed(1)}%]`;
+                    return this.formatOutcomeString(m.groupItemTitle || 'Main', topOutcome);
                 }).join(', ');
                 summary += `${details}\n`;
             } else {
                 // Single market
                 const m = event.markets[0];
-                const outcomeStr = m.outcomes.map((o: any) => `${o.label}: ${(o.probability * 100).toFixed(1)}%`).join(', ');
+                const outcomeStr = m.outcomes.map((o: any) => this.formatOutcomeString(o.label, o)).join(', ');
                 summary += `${outcomeStr}\n`;
             }
         }
 
         return summary;
+    }
+
+    private formatOutcomeString(label: string, outcome: any): string {
+        const prob = (outcome.probability * 100).toFixed(1);
+        let deltaStr = '';
+
+        if (outcome.isNew) {
+            deltaStr = ' (\uD83C\uDD95 New)';
+        } else if (outcome.delta !== undefined) {
+            const sign = outcome.delta > 0 ? '+' : '';
+            const deltaPercent = (outcome.delta * 100).toFixed(1);
+            const emoji = outcome.delta > 0 ? '\uD83D\uDD3A' : (outcome.delta < 0 ? '\uD83D\uDD3B' : ''); // red triangle up/down
+
+            // If change is 0
+            if (outcome.delta === 0) {
+                deltaStr = ' (unchanged)';
+            } else {
+                deltaStr = ` (${emoji}${sign}${deltaPercent}%)`;
+            }
+        }
+
+        // e.g. "Yes: 65.0% (🔺+5.0%)"
+        return `${label}: ${prob}%${deltaStr}`;
     }
 }
