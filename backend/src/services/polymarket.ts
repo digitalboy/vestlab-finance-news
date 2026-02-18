@@ -175,15 +175,24 @@ export class PolymarketService {
 
             // If multiple markets (Group Event), sort by the probability of the "Yes" outcome
             // This ensures we show the most likely scenarios (e.g. "2 cuts", "3 cuts") rather than just high volume outliers
-            const subMarkets = event.markets.map((m: any) => {
+            // Sort and filter:
+            // 1. Sort by "Yes" probability descending
+            // 2. Filter out "Done Deal" markets (>99% prob) if possible, to save context window and avoid noise.
+
+            let sortedMarkets = event.markets.map((m: any) => {
                 const yesOutcome = m.outcomes.find((o: any) => o.label === 'Yes' || o.label === 'Long' || o.label === 'Higher');
-                // If "Yes" exists, use its prob. If not, use volume as fallback.
                 const score = yesOutcome ? yesOutcome.probability : -1;
                 return { ...m, sortScore: score };
             }).sort((a: any, b: any) => {
                 if (a.sortScore !== -1 && b.sortScore !== -1) return b.sortScore - a.sortScore;
                 return b.volume - a.volume;
-            }).slice(0, 5);
+            });
+
+            // Filter > 99% logic
+            const activeMarkets = sortedMarkets.filter((m: any) => m.sortScore < 0.99);
+
+            // If we have active markets, use them. If all are >99% (event basically done), fallback to showing the top ones.
+            const subMarkets = (activeMarkets.length > 0 ? activeMarkets : sortedMarkets).slice(0, 5);
 
             for (const m of subMarkets) {
                 let displayOutcomes = [];

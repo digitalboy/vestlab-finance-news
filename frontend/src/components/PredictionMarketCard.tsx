@@ -8,8 +8,28 @@ export function PredictionMarketCard({ event }: PredictionMarketCardProps) {
     // Check if we have multiple markets (Group Event)
     const isGroupEvent = event.markets.length > 1
 
-    // If group event, take top 3 markets (backend already sorts by volume)
-    const displayMarkets = isGroupEvent ? event.markets.slice(0, 3) : [event.markets[0]]
+    // If group event, take top 3 markets (backend already sorts by probability High->Low)
+    // PROBLEM: If we have many >99% markets (already happened), they clog the top 3.
+    // SOLUTION: Filter out markets with >99% probability (boring) UNLESS all markets are >99%.
+
+    let interestingMarkets = event.markets;
+    if (isGroupEvent) {
+        // Try to filter out "Done Deal" markets (prob > 0.99 or < 0.01 if binary?? No, backend sends Yes prob)
+        // Backend sends "Yes" prob. So >0.99 means it basically happened.
+        const activeMarkets = event.markets.filter(m => {
+            const yes = m.outcomes.find((o: any) => o.label === 'Yes' || o.label === 'Long' || o.label === 'Higher');
+            // If finding logic fails, keep it.
+            if (!yes) return true;
+            return yes.probability < 0.99;
+        });
+
+        // If we have active markets, use them. Otherwise fallback to all (e.g. everything is 100%)
+        if (activeMarkets.length > 0) {
+            interestingMarkets = activeMarkets;
+        }
+    }
+
+    const displayMarkets = isGroupEvent ? interestingMarkets.slice(0, 3) : [event.markets[0]]
 
     // Safety check
     if (displayMarkets.length === 0 || !displayMarkets[0]) return null
@@ -66,8 +86,8 @@ export function PredictionMarketCard({ event }: PredictionMarketCardProps) {
                             {/* Right: Probability */}
                             <div className="w-8 shrink-0 text-right font-mono text-xs">
                                 <span className={`font-bold ${(isBinary && topOutcome === yesOutcome) ? 'text-emerald-600' :
-                                        (isBinary && topOutcome === noOutcome) ? 'text-rose-600' :
-                                            'text-indigo-400'
+                                    (isBinary && topOutcome === noOutcome) ? 'text-rose-600' :
+                                        'text-indigo-400'
                                     }`}>
                                     {(topOutcome.probability * 100).toFixed(0)}%
                                 </span>
