@@ -51,14 +51,7 @@ export class PolymarketService {
 
     private async fetchFromGamma(): Promise<any[]> {
         const baseUrl = 'https://gamma-api.polymarket.com/events';
-        const params = new URLSearchParams({
-            limit: '30', // Fetch more to ensure we have at least 15 valid ones after filtering
-            closed: 'false',
-            // We can't filter by multiple tags in one query easily with their API sometimes, 
-            // but let's try broader queries or multiple if needed. 
-            // For now, let's fetch based on "popular" or specific logic, or just filtered broad list.
-            // Actually Gamma API allows filtering by tag_slug.
-        });
+        // const params = new URLSearchParams({ ... }); // Not used directly in loop below
 
         // We will fetch a few specific key tags in parallel to get a good mix
         const tags = ['fed-rates', 'inflation', 'recession', 'economy', 'geopolitics', 'finance', 'commodities'];
@@ -68,6 +61,7 @@ export class PolymarketService {
         // Limit concurrency if needed, but 5 requests is fine for Worker
         await Promise.all(tags.map(async (tag) => {
             try {
+                // Fetch active markets only (closed=false)
                 const url = `${baseUrl}?limit=5&closed=false&tag_slug=${tag}&order=volume24hr&ascending=false`;
                 const resp = await fetch(url, {
                     headers: { 'User-Agent': 'VestLab-Finance-News/1.0' }
@@ -121,18 +115,35 @@ export class PolymarketService {
                     probability: parseFloat(prices[idx] || '0')
                 }));
 
-                // Sort by probability desc logic (optional, but keep original order usually makes sense for Yes/No)
-
                 return {
                     id: m.id,
                     question: m.question,
-                    groupItemTitle: m.groupItemTitle || m.question, // e.g. "March", "April" or "Yes"
+                    groupItemTitle: m.groupItemTitle,
                     outcomes: formattedOutcomes,
                     volume: m.volume || 0
                 };
             }).filter((m: any) => m !== null);
 
-            if (simplifiedMarkets.length === 0) return null;
+            // Sort markets within the event:
+            // 1. Prefer markets with "Yes" outcome
+            // 2. Sort by "Yes" probability descending
+            simplifiedMarkets.sort((a: any, b: any) => {
+                const getScore = (m: any) => {
+                    const yes = m.outcomes.find((o: any) => o.label === 'Yes' || o.label === 'Long' || o.label === 'Higher');
+                    if (yes) return yes.probability;
+                    // Fallback to max probability if no "Yes" (but this might be "No", so be careful. 
+                    // Better to just use volume if no clear positive outcome
+                    return -1;
+                };
+
+                const scoreA = getScore(a);
+                const scoreB = getScore(b);
+
+                if (scoreA !== -1 && scoreB !== -1) {
+                    return scoreB - scoreA; // Descending probability
+                }
+                return (b.volume || 0) - (a.volume || 0); // Fallback to volume
+            });
 
             return {
                 id: event.id,
@@ -148,6 +159,71 @@ export class PolymarketService {
             console.error('[Polymarket] Error processing event', event.id, e);
             return null;
         }
+    }
+
+    generateMarketSummaryForAI(markets: any[]): string {
+        if (!markets || markets.length === 0) return '';
+
+        let summary = '### 🎲 预测市场信号 (Polymarket Sentiment)\n';
+        summary += 'From Polymarket (Betting on Future Events):\n\n';
+
+        // Limit to top 8 most relevant/high volume
+        const topMarkets = markets.slice(0, 8);
+
+        for (const event of topMarkets) {
+            summary += `**Event: ${event.title}**\n`;
+
+            // If multiple markets (Group Event), sort by the probability of the "Yes" outcome
+            // This ensures we show the most likely scenarios (e.g. "2 cuts", "3 cuts") rather than just high volume outliers
+            const subMarkets = event.markets.map((m: any) => {
+                const yesOutcome = m.outcomes.find((o: any) => o.label === 'Yes' || o.label === 'Long' || o.label === 'Higher');
+                // If "Yes" exists, use its prob. If not, use volume as fallback.
+                const score = yesOutcome ? yesOutcome.probability : -1;
+                return { ...m, sortScore: score };
+            }).sort((a: any, b: any) => {
+                if (a.sortScore !== -1 && b.sortScore !== -1) return b.sortScore - a.sortScore;
+                return b.volume - a.volume;
+            }).slice(0, 5);
+
+            for (const m of subMarkets) {
+                let displayOutcomes = [];
+
+                // Check if it's a standard Binary Yes/No market
+                const yes = m.outcomes.find((o: any) => o.label === 'Yes' || o.label === 'Long' || o.label === 'Higher');
+                const no = m.outcomes.find((o: any) => o.label === 'No' || o.label === 'Short' || o.label === 'Lower');
+
+                if (yes && no && m.outcomes.length === 2) {
+                    // Normalize: Always show "Yes" (or the positive side) to represent the event probability
+                    // This solves the "Sometimes yes, sometimes no" confusion
+                    displayOutcomes = [yes];
+                } else {
+                    // Multi-outcome (e.g. Candidates): Show top 2 by probability
+                    displayOutcomes = [...m.outcomes].sort((a: any, b: any) => b.probability - a.probability).slice(0, 2);
+                }
+
+                const outcomeStr = displayOutcomes.map((o: any) => {
+                    const prob = (o.probability * 100).toFixed(1);
+                    let deltaStr = '';
+                    if (o.isNew) {
+                        deltaStr = ' (🆕 New)';
+                    } else if (o.delta !== undefined) {
+                        const sign = o.delta > 0 ? '+' : '';
+                        const deltaPercent = (o.delta * 100).toFixed(1);
+                        const emoji = o.delta > 0 ? '🔺' : (o.delta < 0 ? '🔻' : '');
+                        if (o.delta === 0) deltaStr = ' (unchanged)';
+                        else deltaStr = ` (${emoji}${sign}${deltaPercent}%)`;
+                    }
+                    return `${o.label}: ${prob}%${deltaStr}`;
+                }).join(', ');
+
+                // Include Question to disambiguate
+                summary += `- Market: "${m.question}" -> [ ${outcomeStr} ]\n`;
+            }
+            summary += '\n';
+        }
+
+        console.log('[Polymarket] Generated AI Summary Preview:\n', summary);
+        return summary;
     }
 
     /**
@@ -206,63 +282,5 @@ export class PolymarketService {
             }
         }
         return items;
-    }
-
-    /**
-     * Generate a text summary of key markets for AI injection
-     */
-    generateMarketSummaryForAI(markets: any[]): string {
-        if (!markets || markets.length === 0) return '';
-
-        let summary = '### \uD83C\uDFB2 \u9884\u6D4B\u5E02\u573A\u60C5\u7eea (Polymarket)\n';
-        summary += '\u4EE5\u4E0B\u662F\u5F53\u524D\u70ED\u95E8\u5B8F\u89C2\u9884\u6D4B\u5E02\u573A\u7684\u5B9E\u65F6\u8D54\u7387\u6570\u636E\uFF08\u53CD\u6620\u201C\u806A\u660E\u94B1\u201D\u7684\u771F\u91D1\u767D\u94F6\u62BC\u6CE8\uFF09\uFF1A\n\n';
-
-        // Limit to top 5-8 most relevant/high volume
-        const topMarkets = markets.slice(0, 8);
-
-        for (const event of topMarkets) {
-            summary += `**${event.title}**: `;
-
-            // Check if it's a "Group" event (like "Fed Rates 2024") with multiple sub-markets
-            if (event.markets.length > 1) {
-                // List top 3 sub-markets by volume within this event
-                const subMarkets = event.markets.sort((a: any, b: any) => b.volume - a.volume).slice(0, 3);
-                const details = subMarkets.map((m: any) => {
-                    const topOutcome = m.outcomes.reduce((prev: any, current: any) => (prev.probability > current.probability) ? prev : current);
-                    return this.formatOutcomeString(m.groupItemTitle || 'Main', topOutcome);
-                }).join(', ');
-                summary += `${details}\n`;
-            } else {
-                // Single market
-                const m = event.markets[0];
-                const outcomeStr = m.outcomes.map((o: any) => this.formatOutcomeString(o.label, o)).join(', ');
-                summary += `${outcomeStr}\n`;
-            }
-        }
-
-        return summary;
-    }
-
-    private formatOutcomeString(label: string, outcome: any): string {
-        const prob = (outcome.probability * 100).toFixed(1);
-        let deltaStr = '';
-
-        if (outcome.isNew) {
-            deltaStr = ' (\uD83C\uDD95 New)';
-        } else if (outcome.delta !== undefined) {
-            const sign = outcome.delta > 0 ? '+' : '';
-            const deltaPercent = (outcome.delta * 100).toFixed(1);
-            const emoji = outcome.delta > 0 ? '\uD83D\uDD3A' : (outcome.delta < 0 ? '\uD83D\uDD3B' : ''); // red triangle up/down
-
-            // If change is 0
-            if (outcome.delta === 0) {
-                deltaStr = ' (unchanged)';
-            } else {
-                deltaStr = ` (${emoji}${sign}${deltaPercent}%)`;
-            }
-        }
-
-        // e.g. "Yes: 65.0% (🔺+5.0%)"
-        return `${label}: ${prob}%${deltaStr}`;
     }
 }

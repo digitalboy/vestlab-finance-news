@@ -21,13 +21,13 @@ export class RSSService {
         try {
             const date = new Date(dateStr);
             if (isNaN(date.getTime())) {
-                console.warn(`Invalid date: "${dateStr}", using current time.`);
-                return new Date().toISOString();
+                console.warn(`Invalid date: "${dateStr}", using Epoch.`);
+                return new Date(0).toISOString(); // 1970-01-01
             }
             return date.toISOString();
         } catch {
-            console.warn(`Failed to parse date: "${dateStr}", using current time.`);
-            return new Date().toISOString();
+            console.warn(`Failed to parse date: "${dateStr}", using Epoch.`);
+            return new Date(0).toISOString();
         }
     }
 

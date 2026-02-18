@@ -29,8 +29,16 @@ export function PredictionMarketCard({ event }: PredictionMarketCardProps) {
                 {displayMarkets.map((market) => {
                     if (!market) return null
 
-                    const topOutcome = market.outcomes.reduce((prev, current) => (prev.probability > current.probability) ? prev : current)
-                    const isYesNo = market.outcomes.length === 2 && market.outcomes.some(o => o.label === 'Yes')
+                    // Logic to prefer "Yes" or positive outcome
+                    const yesOutcome = market.outcomes.find((o) => o.label === 'Yes' || o.label === 'Long' || o.label === 'Higher')
+                    const noOutcome = market.outcomes.find((o) => o.label === 'No' || o.label === 'Short' || o.label === 'Lower')
+                    const isBinary = yesOutcome && noOutcome && market.outcomes.length === 2
+
+                    // If binary, ALWAYS show the positive outcome (Yes/Long/Higher)
+                    // Otherwise, fall back to the highest probability one
+                    let topOutcome = isBinary ? yesOutcome : market.outcomes.reduce((prev, current) => (prev.probability > current.probability) ? prev : current)
+
+                    if (!topOutcome) topOutcome = market.outcomes[0]
 
                     // Determine the label to show on the left
                     // For group events: use the group title (e.g. "Feb 28")
@@ -47,8 +55,8 @@ export function PredictionMarketCard({ event }: PredictionMarketCardProps) {
                             {/* Middle: Progress Bar */}
                             <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
                                 <div
-                                    className={`h-full rounded-full ${isYesNo
-                                        ? (topOutcome.label === 'Yes' ? 'bg-gradient-to-r from-emerald-700 to-emerald-600 opacity-80' : 'bg-gradient-to-r from-rose-700 to-rose-600 opacity-80')
+                                    className={`h-full rounded-full ${isBinary
+                                        ? (topOutcome === yesOutcome ? 'bg-gradient-to-r from-emerald-700 to-emerald-600 opacity-80' : 'bg-gradient-to-r from-rose-700 to-rose-600 opacity-80')
                                         : 'bg-gradient-to-r from-indigo-500 to-purple-500'
                                         }`}
                                     style={{ width: `${topOutcome.probability * 100}%` }}
@@ -57,7 +65,10 @@ export function PredictionMarketCard({ event }: PredictionMarketCardProps) {
 
                             {/* Right: Probability */}
                             <div className="w-8 shrink-0 text-right font-mono text-xs">
-                                <span className={`font-bold ${topOutcome.label === 'Yes' ? 'text-emerald-600' : topOutcome.label === 'No' ? 'text-rose-600' : 'text-indigo-400'}`}>
+                                <span className={`font-bold ${(isBinary && topOutcome === yesOutcome) ? 'text-emerald-600' :
+                                        (isBinary && topOutcome === noOutcome) ? 'text-rose-600' :
+                                            'text-indigo-400'
+                                    }`}>
                                     {(topOutcome.probability * 100).toFixed(0)}%
                                 </span>
                             </div>
