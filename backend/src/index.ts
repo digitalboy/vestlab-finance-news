@@ -107,7 +107,7 @@ app.get('/trigger-translation', async (c) => {
 app.get('/trigger-market-fetch', async (c) => {
     const db = new DBService(c.env.DB);
     const market = new MarketDataService();
-    const result = await fetchMarketData(db, market);
+    const result = await fetchMarketData(db, market, 0, 100);
     return c.json(result);
 });
 
@@ -146,14 +146,23 @@ export default {
 
             const batchIndex = runIndex % totalBatches;
 
-            console.log(`[Cron] Run Index: ${runIndex}, Batch: ${batchIndex}/${totalBatches}, Sources: ${ALL_NEWS_SOURCES.length}`);
+            // Market Data Batching
+            // Total symbols ~30. 
+            // We want to fetch a small chunk each time to save CPU.
+            // Batch size = 4 => ~8 batches => Full cycle in 24 mins.
+            const MARKET_BATCH_SIZE = 4;
+            // Market data run index (can be same as generic runIndex)
+            const marketBatchIndex = Math.floor(epochMinutes / 3);
+
+            console.log(`[Cron] News Batch: ${batchIndex}/${totalBatches} | Market Batch Index: ${marketBatchIndex}`);
 
             ctx.waitUntil(
                 Promise.all([
                     fetchNews(db, rss, batchIndex),
-                    // Always run translation check (decoupled from fetch success)
+                    // Check translations (reduced batch size)
                     generateTranslations(db, ai),
-                    fetchMarketData(db, market),
+                    // Fetch subset of market data
+                    fetchMarketData(db, market, marketBatchIndex, MARKET_BATCH_SIZE),
                 ])
             );
         } else if (event.cron === '0 0 * * *') {
@@ -278,29 +287,57 @@ async function fetchNews(db: DBService, rss: RSSService, batchIndex: number) {
     }
 }
 
-async function fetchMarketData(db: DBService, market: MarketDataService) {
+async function fetchMarketData(db: DBService, market: MarketDataService, batchIndex: number, batchSize: number) {
     try {
-        // Check which symbols already have historical data
-        const existingSymbols = await db.getSymbolsWithHistory();
+        // Calculate sharding
         const allSymbols = Object.keys(market.getTrackedSymbols());
-        const missingCount = allSymbols.filter(s => !existingSymbols.has(s)).length;
 
-        // If any symbols are missing history, run cold start for those
-        if (missingCount > 0) {
-            console.log(`[MarketData] ${missingCount}/${allSymbols.length} symbols need cold start...`);
-            const historicalItems = await market.coldStart(existingSymbols);
-            const saved = await db.saveMarketDataBatch(historicalItems);
-            // Also fetch latest quotes after cold start
-            const quotes = await market.fetchQuotes();
-            const quoteSaved = await db.saveMarketDataBatch(quotes);
-            return { action: 'cold_start', history_saved: saved, quotes_saved: quoteSaved, missing: missingCount };
+        // Simple modulo batching
+        const totalBatches = Math.ceil(allSymbols.length / batchSize);
+        const currentBatch = batchIndex % totalBatches;
+        const start = currentBatch * batchSize;
+        const end = start + batchSize;
+
+        const targetSymbols = allSymbols.slice(start, end);
+
+        // Check which symbols already have historical data (for cold start logic)
+        // Note: For sharded fetch, we might just assume history exists or checks strictly for these.
+        // To be safe, let's just do daily update for these symbols. 
+        // Cold start (history backfill) is best done manually or via a separate trigger if missing.
+        // But let's keep the check for robustness if it's cheap.
+
+        console.log(`[MarketData] Batch ${currentBatch}/${totalBatches}: Fetching ${targetSymbols.length} symbols (${targetSymbols.join(', ')})`);
+
+        const existingSymbols = await db.getSymbolsWithHistory();
+        const missingInBatch = targetSymbols.filter(s => !existingSymbols.has(s));
+
+        // If any symbols in this batch are missing history, run cold start for THEM only
+        if (missingInBatch.length > 0) {
+            console.log(`[MarketData] Cold start for ${missingInBatch.length} symbols...`);
+            // Only cold start the missing ones in this batch
+            // We need to expose a method to cold start specific list? 
+            // market.coldStart accepts existingSymbols Set, so it filters automatically.
+            // But we want to restrict it to `missingInBatch`.
+
+            // Logic: we can just call fetchHistory for them manually here, or rely on market.fetchQuotes to be just quote.
+            // market.coldStart() iterates all missing. We should probably just let it be or optimize.
+            // Let's implement specific cold start for this batch manually to avoid scanning everything.
+
+            const coldItems = [];
+            for (const s of missingInBatch) {
+                const history = await market.fetchHistory(s);
+                coldItems.push(...history);
+            }
+            if (coldItems.length > 0) {
+                await db.saveMarketDataBatch(coldItems);
+            }
         }
 
-        // All symbols have history — just do daily update
-        console.log('[MarketData] Fetching latest quotes...');
-        const quotes = await market.fetchQuotes();
+        // Fetch latest quotes for this batch
+        const quotes = await market.fetchQuotes(targetSymbols);
         const saved = await db.saveMarketDataBatch(quotes);
-        return { action: 'daily_update', saved };
+        return { action: 'batch_update', saved, symbols: targetSymbols };
+
     } catch (error) {
         console.error('[MarketData] Error fetching market data:', error);
         return { action: 'error', error: String(error) };
@@ -401,9 +438,8 @@ async function generateDailyBriefing(db: DBService, ai: AliyunService, session: 
 
 async function generateTranslations(db: DBService, ai: AliyunService) {
     console.log('Starting daily translation...');
-    console.log('Starting daily translation...');
-    // OPTIMIZATION: Increased batch size to 10 to prevent backlog
-    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 10);
+    // OPTIMIZATION: Reduced batch size to 5 to save CPU/Time
+    const newsItems = await db.getRecentNewsWithoutTranslation('zh', 5);
     console.log(`Found ${newsItems.length} items to translate.`);
 
     for (const news of newsItems) {
