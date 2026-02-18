@@ -16,6 +16,7 @@ async function check() {
 
         if (e) {
             console.log(`[${e.id}] ${e.title} (Closed: ${e.closed})`);
+            console.log(`End Date: ${e.endDate}`); // Check end date
             console.log(`Markets count: ${e.markets.length}`);
 
             // Simulate the simplified mapping in PolymarketService

@@ -99,6 +99,19 @@ export class PolymarketService {
             // Or if it's a Group event (like "Fed Rates"), it might have multiple relevant markets (Mar, May, Jun...)
             // For simplicity, we pass all markets but might filter on frontend
 
+            // 0. Filter out expired markets (even if API says forced closed=false, they might be ended but not settled)
+            if (event.endDate) {
+                const endDate = new Date(event.endDate);
+                // Buffer: Allow 24h grace period for "Just Ended" to show resolution? 
+                // No, user wants active markets. If it ended, it's done. 
+                // But be careful with timezones. 
+                // Let's use current time.
+                if (endDate.getTime() < Date.now()) {
+                    // console.log(`Skipping expired event: ${event.title} (Ended: ${event.endDate})`);
+                    return null;
+                }
+            }
+
             const simplifiedMarkets = markets.map((m: any) => {
                 let outcomes = [];
                 let prices = [];
